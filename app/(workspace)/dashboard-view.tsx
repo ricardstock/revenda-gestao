@@ -352,7 +352,7 @@ export function DashboardView() {
         </article>
         <article className="dashboard-metric">
           <span>IVA estimado</span>
-          <strong>{ready ? metrics.vatEstimate === null ? "—" : <DashboardMoney value={metrics.vatEstimate} /> : "…"}</strong>
+          <strong>{ready ? metrics.vatEstimate === null ? "—" : <DashboardMoney value={-metrics.vatEstimate} /> : "…"}</strong>
           <small>Estimativa pelo tipo das vendas concluídas</small>
         </article>
       </section>
