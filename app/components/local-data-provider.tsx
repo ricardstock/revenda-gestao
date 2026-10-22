@@ -22,6 +22,7 @@ type LocalDataContextValue = {
   error: string | null;
   sync: SyncStatus;
   retrySync: () => void;
+  replaceAll: (text: string) => void;
   update: (updater: (current: LocalData) => LocalData) => void;
 };
 
@@ -219,9 +220,31 @@ export function LocalDataProvider({
     else window.location.reload();
   }, [flush]);
 
+  const replaceAll = useCallback(
+    (text: string) => {
+      if (!ready) throw new Error("Os dados ainda estão a carregar.");
+      let parsed: LocalData;
+      try {
+        parsed = parseLocalData(JSON.parse(text));
+      } catch {
+        throw new Error("O ficheiro não é uma cópia de dados válida.");
+      }
+      window.localStorage.setItem(STORAGE_KEY, JSON.stringify(parsed));
+      dataRef.current = parsed;
+      setData(parsed);
+      setError(null);
+      if (remoteReadyRef.current) {
+        setSync("saving");
+        if (saveTimer.current) clearTimeout(saveTimer.current);
+        saveTimer.current = setTimeout(() => void flush(), 200);
+      }
+    },
+    [flush, ready],
+  );
+
   const value = useMemo(
-    () => ({ data, ready, error, sync, retrySync, update }),
-    [data, error, ready, retrySync, sync, update],
+    () => ({ data, ready, error, sync, retrySync, update, replaceAll }),
+    [data, error, ready, replaceAll, retrySync, sync, update],
   );
   return (
     <LocalDataContext.Provider value={value}>

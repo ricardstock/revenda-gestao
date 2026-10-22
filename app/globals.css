@@ -350,6 +350,22 @@ button {
   margin-left: 6px;
 }
 
+.data-transfer {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.data-transfer .button {
+  flex: 1;
+  justify-content: center;
+  cursor: pointer;
+}
+
+.workspace--collapsed .data-transfer {
+  display: none;
+}
+
 .workspace--collapsed .local-status {
   justify-content: center;
   padding: 12px 0;

@@ -69,7 +69,7 @@ function normalizeSearchText(value: string) {
 export function WorkspaceShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const { theme, toggleTheme } = useTheme();
-  const { data, ready, error, sync, retrySync } = useLocalData();
+  const { data, ready, error, sync, retrySync, replaceAll } = useLocalData();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [streamMode, setStreamMode] = useState(false);
@@ -364,6 +364,45 @@ export function WorkspaceShell({ children }: { children: React.ReactNode }) {
               <strong>{sync === "error" ? "Sem ligação" : "Online"}</strong>
               <span>{error ? "Erro no armazenamento" : !ready ? "A carregar dados…" : sync === "saved" ? "Guardado na base de dados" : sync === "saving" ? "A guardar…" : sync === "error" ? "Não guardado online" : "A ligar…"}</span>
             </div>
+          </div>
+          <div className="data-transfer">
+            <button
+              type="button"
+              className="button button--small"
+              disabled={!ready}
+              onClick={() => {
+                const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
+                const url = URL.createObjectURL(blob);
+                const link = document.createElement("a");
+                link.href = url;
+                link.download = `revenda-gestao-${localDateString(new Date())}.json`;
+                link.click();
+                URL.revokeObjectURL(url);
+              }}
+            >
+              Exportar
+            </button>
+            <label className="button button--small data-transfer__import">
+              Importar
+              <input
+                type="file"
+                accept="application/json,.json"
+                hidden
+                onChange={async (event) => {
+                  const input = event.currentTarget;
+                  const file = input.files?.[0];
+                  input.value = "";
+                  if (!file) return;
+                  if (!window.confirm("Importar substitui todos os dados atuais pelos do ficheiro. Continuar?")) return;
+                  try {
+                    replaceAll(await file.text());
+                    window.alert("Dados importados com sucesso.");
+                  } catch (cause) {
+                    window.alert(cause instanceof Error ? cause.message : "Não foi possível importar.");
+                  }
+                }}
+              />
+            </label>
           </div>
           <button
             className="collapse-button"
