@@ -370,7 +370,7 @@ export function CompletedSalesPage() {
                     <td data-label="Fornecedor">{supplier?.name || "—"}</td>
                     <td data-label="IVA estimado">{financials.vatEstimate === null ? "—" : <FinancialValue value={-financials.vatEstimate}><PrivacyValue>{formatEur(financials.vatEstimate)}</PrivacyValue></FinancialValue>}</td>
                     <td data-label="Pagamento"><PaymentStatusBadge sale={sale} payments={data.payments} /></td>
-                    <td data-label="Declarado?">{sale.saleType === "PRIVATE" ? "PRIVATE" : sale.declared === "YES" ? "Sim" : "Não"}</td>
+                    <td data-label="Declarado?">{sale.saleType === "PRIVATE" ? "PRIVATE" : sale.declared === "YES" ? <span className="declared-badge declared-badge--yes">Sim</span> : <span className="declared-badge declared-badge--no">Não</span>}</td>
                     <td data-label="Track">{sale.trackingUrl ? <a href={sale.trackingUrl} target="_blank" rel="noreferrer">Abrir</a> : "—"}</td>
                     <td className="pending-sale-actions sales-actions-cell" data-label="Ações">
                       <button className="button button--small" type="button" onClick={() => setDetailsSale(sale)}>Detalhes</button>
