@@ -17,6 +17,7 @@ import {
 import { useLocalData } from "./local-data-provider";
 import { PrivacyValue } from "./workspace-shell";
 import { CustomerAutocomplete } from "./customer-autocomplete";
+import { BulkStockModal } from "./bulk-stock-modal";
 
 type PurchaseType = NonNullable<Product["purchaseType"]>;
 
@@ -27,6 +28,7 @@ function validStockSaleType(value: string): value is Sale["saleType"] {
 export function StockPage() {
   const { data, ready, error, update } = useLocalData();
   const [modalOpen, setModalOpen] = useState(false);
+  const [bulkOpen, setBulkOpen] = useState(false);
   const [editingProductId, setEditingProductId] = useState<string | null>(null);
   const [selectedSupplierId, setSelectedSupplierId] = useState("");
   const [addingSupplier, setAddingSupplier] = useState(false);
@@ -480,9 +482,14 @@ export function StockPage() {
           <h1>Stock</h1>
           <p>Produtos e unidades disponíveis para venda.</p>
         </div>
-        <button className="button button--primary" type="button" onClick={openModal}>
-          + Adicionar produto
-        </button>
+        <div className="stock-page__actions">
+          <button className="button" type="button" onClick={() => { setSavedMessage(""); setBulkOpen(true); }}>
+            + Vários tamanhos
+          </button>
+          <button className="button button--primary" type="button" onClick={openModal}>
+            + Adicionar produto
+          </button>
+        </div>
       </header>
 
       {error && <p className="feedback feedback--error" role="alert">{error}</p>}
@@ -576,6 +583,11 @@ export function StockPage() {
           </table>
         </div>
       </section>
+
+      {bulkOpen && <BulkStockModal
+        onClose={() => setBulkOpen(false)}
+        onSaved={(message) => { setBulkOpen(false); setSavedMessage(message); }}
+      />}
 
       {modalOpen && <div className="sale-modal-backdrop" onMouseDown={(event) => {
         if (event.target === event.currentTarget) setModalOpen(false);

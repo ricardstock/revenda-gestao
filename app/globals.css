@@ -1029,6 +1029,33 @@ button {
   background: #d92d2d;
   color: #fff;
 }
+.stock-page__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.bulk-sizes {
+  display: grid;
+  gap: 8px;
+  margin-top: 14px;
+}
+.bulk-sizes__row {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1.4fr 36px;
+  gap: 8px;
+  align-items: center;
+}
+.bulk-sizes__head {
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 600;
+}
+.bulk-sizes .button--small {
+  justify-self: start;
+}
+.bulk-sizes__row .button--small {
+  justify-self: stretch;
+}
 
 .sales-actions-heading,
 .sales-actions-cell {
