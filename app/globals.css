@@ -1057,6 +1057,119 @@ button {
   justify-self: stretch;
 }
 
+/* Layout uniforme: todas as páginas centradas com a mesma largura */
+.main-content {
+  width: min(100%, 1320px);
+  padding: 36px 40px 48px;
+}
+
+.main-content--sales {
+  width: 100%;
+  max-width: none;
+}
+
+.stock-page,
+.contacts-page,
+.statistics-page {
+  width: 100%;
+  max-width: 100%;
+}
+
+.page-stack {
+  gap: 24px;
+}
+
+.stock-page__header {
+  padding-bottom: 6px;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 2px;
+}
+
+.stock-page__header h1 {
+  font-size: 30px;
+}
+
+.stock-summary > div,
+.content-panel {
+  border-radius: 12px;
+  box-shadow: var(--shadow);
+}
+
+.stock-summary > div {
+  align-content: center;
+  padding: 18px 20px;
+}
+
+.stock-summary strong {
+  font-size: 22px;
+  line-height: 1.2;
+}
+
+.content-panel__top {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px 22px;
+  padding: 20px 22px 6px;
+}
+
+.content-panel__top h2 {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 650;
+  letter-spacing: -0.2px;
+}
+
+.content-panel__top p {
+  margin: 5px 0 0;
+  color: var(--muted);
+  font-size: 11px;
+}
+
+.incoming-history-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--muted-strong);
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.incoming-history-toggle input {
+  accent-color: var(--accent);
+}
+
+.stock-archived-toggle,
+.expenses-filters .stock-archived-toggle,
+.pending-sales-page .stock-archived-toggle {
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.data-table th {
+  background: var(--surface-muted, rgb(127 137 160 / 6%));
+  padding: 11px 10px;
+  font-size: 10px;
+  letter-spacing: 0.2px;
+}
+
+.data-table td {
+  padding-block: 0;
+}
+
+.data-table tbody tr:not(:has(.table-empty)):hover {
+  background: rgb(127 137 160 / 6%);
+}
+
+.data-table tbody td.table-empty,
+.table-empty {
+  padding: 44px 16px !important;
+  color: var(--muted);
+  font-size: 12px;
+  text-align: center;
+}
+
 .sales-actions-heading,
 .sales-actions-cell {
   text-align: right;
