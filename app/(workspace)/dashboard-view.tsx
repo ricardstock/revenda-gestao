@@ -355,6 +355,11 @@ export function DashboardView() {
           <strong>{ready ? metrics.vatEstimate === null ? "—" : <DashboardMoney value={-metrics.vatEstimate} /> : "…"}</strong>
           <small>Estimativa pelo tipo das vendas concluídas</small>
         </article>
+        <article className="dashboard-metric">
+          <span>Despesas</span>
+          <strong>{ready ? <DashboardMoney value={-metrics.expenses} /> : "…"}</strong>
+          <small>Despesas registadas, sem IVA nem envios já contados nas vendas</small>
+        </article>
       </section>
 
       <section className="content-panel dashboard-goals">
