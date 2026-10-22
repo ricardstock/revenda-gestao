@@ -1041,7 +1041,7 @@ button {
 }
 .bulk-sizes__row {
   display: grid;
-  grid-template-columns: 1fr 1fr 1.4fr 36px;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1.4fr) 38px;
   gap: 8px;
   align-items: center;
 }
@@ -1884,6 +1884,7 @@ button {
 
 .form-field input,
 .form-field select,
+.bulk-sizes__row input,
 .line-entry input,
 .line-entry select,
 .table-search {
@@ -1902,6 +1903,7 @@ button {
 
 .form-field input:focus-visible,
 .form-field select:focus-visible,
+.bulk-sizes__row input:focus-visible,
 .line-entry input:focus-visible,
 .line-entry select:focus-visible,
 .table-search:focus-visible {

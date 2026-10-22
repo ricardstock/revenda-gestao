@@ -13,7 +13,7 @@ function newRow(): SizeRow {
 
 export function BulkStockModal({ onClose, onSaved }: { onClose: () => void; onSaved: (message: string) => void }) {
   const { data, update } = useLocalData();
-  const [rows, setRows] = useState<SizeRow[]>(() => [newRow(), newRow(), newRow()]);
+  const [rows, setRows] = useState<SizeRow[]>(() => [newRow(), newRow()]);
   const [error, setError] = useState("");
 
   function changeRow(key: string, field: "size" | "quantity" | "cost", value: string) {
