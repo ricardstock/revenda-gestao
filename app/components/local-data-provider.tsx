@@ -10,6 +10,7 @@ import {
   useState,
 } from "react";
 import { emptyLocalData, type LocalData } from "../lib/local-data";
+import { mergeLegacyBackup, type LegacyImportSummary } from "../lib/legacy-import";
 import { createClient } from "../lib/supabase/client";
 
 const STORAGE_KEY = "revenda-gestao.local-data.v1";
@@ -23,6 +24,7 @@ type LocalDataContextValue = {
   sync: SyncStatus;
   retrySync: () => void;
   replaceAll: (text: string) => void;
+  mergeLegacy: (text: string) => LegacyImportSummary;
   update: (updater: (current: LocalData) => LocalData) => void;
 };
 
@@ -242,9 +244,32 @@ export function LocalDataProvider({
     [flush, ready],
   );
 
+  const mergeLegacy = useCallback(
+    (text: string) => {
+      if (!ready) throw new Error("Os dados ainda estão a carregar.");
+      let backup: unknown;
+      try {
+        backup = JSON.parse(text);
+      } catch {
+        throw new Error("O ficheiro não é um JSON válido.");
+      }
+      const { data: merged, summary } = mergeLegacyBackup(dataRef.current, backup);
+      window.localStorage.setItem(STORAGE_KEY, JSON.stringify(merged));
+      dataRef.current = merged;
+      setData(merged);
+      if (remoteReadyRef.current) {
+        setSync("saving");
+        if (saveTimer.current) clearTimeout(saveTimer.current);
+        saveTimer.current = setTimeout(() => void flush(), 200);
+      }
+      return summary;
+    },
+    [flush, ready],
+  );
+
   const value = useMemo(
-    () => ({ data, ready, error, sync, retrySync, update, replaceAll }),
-    [data, error, ready, replaceAll, retrySync, sync, update],
+    () => ({ data, ready, error, sync, retrySync, update, replaceAll, mergeLegacy }),
+    [data, error, ready, replaceAll, mergeLegacy, retrySync, sync, update],
   );
   return (
     <LocalDataContext.Provider value={value}>

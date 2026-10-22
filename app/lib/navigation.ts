@@ -154,37 +154,3 @@ export const pageTitles: Record<SectionId, string> = {
   "estatisticas-mensais": "Estatísticas mensais",
   "estatisticas-trimestrais": "Estatísticas trimestrais",
 };
-
-export const pageDescriptions: Record<SectionId, string> = {
-  produtos: "Gira o catálogo e consulta as unidades disponíveis por produto.",
-  vendas:
-    "Registe cada venda e acompanhe o pagamento e o estado do stock.",
-  "encomendas-pendentes":
-    "Registe vendas por concluir e acompanhe pagamentos sem reservar stock.",
-  "compras-entregas":
-    "Acompanhe compras, entregas parciais e quantidades efetivamente recebidas.",
-  "produtos-a-caminho":
-    "Registe produtos encomendados e passe-os para o stock quando forem recebidos.",
-  stock:
-    "Consulte unidades disponíveis, custo de aquisição, localização e estado operacional.",
-  inventario:
-    "Prepare contagens e consulte movimentos de entrada, saída e devolução.",
-  fornecedores: "Organize a informação de contacto e compras por fornecedor.",
-  clientes: "Organize a informação de contacto e vendas por cliente.",
-  despesas:
-    "Acompanhe despesas associadas a vendas, como portes, comissões e taxas.",
-  "devolucoes-reembolsos":
-    "Registe devoluções, decisões de inspeção e reembolsos associados a vendas.",
-  relatorios:
-    "Prepare análises por período e exportações em formatos comuns.",
-  "simulador-lucro":
-    "Explore cenários de preço, custo e despesas sem alterar registos.",
-  "assistente-ia":
-    "Faça perguntas sobre os dados. O assistente será apenas de consulta.",
-  definicoes:
-    "Preferências da interface e opções da plataforma, disponíveis gradualmente.",
-  "estatisticas-mensais":
-    "Analise faturação, custos, lucros, clientes e produtos por mês.",
-  "estatisticas-trimestrais":
-    "Compare faturação, custos, lucros, clientes e produtos por trimestre.",
-};

@@ -12,6 +12,7 @@ import {
   type Sale,
 } from "../lib/local-data";
 import { signOut } from "../login/actions";
+import { isLegacyBackup } from "../lib/legacy-import";
 import { Icon } from "./icons";
 import { useLocalData } from "./local-data-provider";
 import { useTheme } from "./theme-provider";
@@ -69,7 +70,7 @@ function normalizeSearchText(value: string) {
 export function WorkspaceShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const { theme, toggleTheme } = useTheme();
-  const { data, ready, error, sync, retrySync, replaceAll } = useLocalData();
+  const { data, ready, error, sync, retrySync, replaceAll, mergeLegacy } = useLocalData();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [streamMode, setStreamMode] = useState(false);
@@ -393,10 +394,26 @@ export function WorkspaceShell({ children }: { children: React.ReactNode }) {
                   const file = input.files?.[0];
                   input.value = "";
                   if (!file) return;
-                  if (!window.confirm("Importar substitui todos os dados atuais pelos do ficheiro. Continuar?")) return;
+                  const content = await file.text();
+                  let legacy = false;
                   try {
-                    replaceAll(await file.text());
-                    window.alert("Dados importados com sucesso.");
+                    legacy = isLegacyBackup(JSON.parse(content));
+                  } catch {
+                    window.alert("O ficheiro não é um JSON válido.");
+                    return;
+                  }
+                  try {
+                    if (legacy) {
+                      if (!window.confirm("Foi detetada uma cópia da plataforma anterior. Os dados vão ser ADICIONADOS aos atuais (nada é apagado). Continuar?")) return;
+                      const result = mergeLegacy(content);
+                      window.alert(
+                        `Importado: ${result.sales} vendas concluídas, ${result.pendingSales} pendentes, ${result.stockProducts} produtos em stock, ${result.suppliers} fornecedores, ${result.customers} clientes novos e ${result.expenses} despesas. Ignorados: ${result.skipped}.`,
+                      );
+                    } else {
+                      if (!window.confirm("Importar substitui todos os dados atuais pelos do ficheiro. Continuar?")) return;
+                      replaceAll(content);
+                      window.alert("Dados importados com sucesso.");
+                    }
                   } catch (cause) {
                     window.alert(cause instanceof Error ? cause.message : "Não foi possível importar.");
                   }

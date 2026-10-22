@@ -731,12 +731,3 @@ export function formatEur(value: number) {
     currency: "EUR",
   }).format(roundMoney(value));
 }
-
-export function formatDate(value: string) {
-  if (!value) return "—";
-  return new Intl.DateTimeFormat("pt-PT").format(new Date(`${value}T12:00:00`));
-}
-
-export function csvCell(value: string | number) {
-  return `"${String(value).replaceAll('"', '""')}"`;
-}
