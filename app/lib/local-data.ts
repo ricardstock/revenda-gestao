@@ -580,8 +580,36 @@ export function deleteSaleAndRelatedData(data: LocalData, saleId: string) {
   if (!data.sales.some((sale) => sale.id === saleId)) {
     throw new Error("Esta venda já não existe.");
   }
+  const soldUnitIds = new Set(
+    data.sales.find((sale) => sale.id === saleId)?.lines.flatMap((line) => line.unitIds) ?? [],
+  );
+  const returnedUnitIds = new Set(
+    data.returns.filter((record) => record.saleId === saleId).map((record) => record.unitId),
+  );
+  const restoredUnits = data.units.filter(
+    (unit) => soldUnitIds.has(unit.id) && unit.status === "SOLD" && !returnedUnitIds.has(unit.id),
+  );
+  const restoredAt = new Date().toISOString();
   return {
     ...data,
+    units: data.units.map((unit) =>
+      restoredUnits.some((restored) => restored.id === unit.id)
+        ? { ...unit, status: "READY_TO_SHIP" as const }
+        : unit,
+    ),
+    movements: [
+      ...data.movements,
+      ...restoredUnits.map((unit) => ({
+        id: makeId(),
+        unitId: unit.id,
+        type: "ADJUSTMENT_IN" as const,
+        quantityDelta: 1 as const,
+        fromLocationId: "",
+        toLocationId: unit.locationId,
+        occurredAt: restoredAt,
+        notes: "Venda eliminada, unidade devolvida ao stock",
+      })),
+    ],
     sales: data.sales.filter((sale) => sale.id !== saleId),
     payments: data.payments.filter((payment) => payment.saleId !== saleId),
     expenses: data.expenses.filter((expense) => expense.saleId !== saleId),

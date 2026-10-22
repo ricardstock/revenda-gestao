@@ -29,6 +29,7 @@ export function StockPage() {
   const { data, ready, error, update } = useLocalData();
   const [modalOpen, setModalOpen] = useState(false);
   const [bulkOpen, setBulkOpen] = useState(false);
+  const [saleQuantity, setSaleQuantity] = useState("1");
   const [editingProductId, setEditingProductId] = useState<string | null>(null);
   const [selectedSupplierId, setSelectedSupplierId] = useState("");
   const [addingSupplier, setAddingSupplier] = useState(false);
@@ -109,6 +110,7 @@ export function StockPage() {
     setStockSaleType(product.purchaseType ?? "PRIVATE");
     setDeclaredValue("NO");
     setInvoiceNumber("");
+    setSaleQuantity("1");
     setSellingProductId(product.id);
   }
 
@@ -142,20 +144,20 @@ export function StockPage() {
         throw new Error("Seleciona uma opção válida para Declarado.");
       }
       if (salePaymentMode === "PARTIAL" &&
-        (!Number.isFinite(partialAmount) || partialAmount <= 0 || partialAmount >= saleValue)) {
+        (!Number.isFinite(partialAmount) || partialAmount <= 0 || partialAmount >= saleValue * sellQuantity)) {
         throw new Error("A parte paga tem de ser superior a zero e inferior ao valor da venda.");
       }
 
       const saleId = makeId();
       const createdAt = new Date().toISOString();
       const paidAmount = salePaymentMode === "PAID"
-        ? roundMoney(saleValue)
+        ? roundMoney(saleValue * sellQuantity)
         : salePaymentMode === "PARTIAL"
           ? roundMoney(partialAmount)
           : 0;
       const line: SaleLine = {
         productId: sellingProduct.id,
-        quantity: 1,
+        quantity: sellQuantity,
         unitPrice: roundMoney(saleValue),
         unitIds: [],
         sku: sellingProduct.sku,
@@ -186,6 +188,13 @@ export function StockPage() {
         );
         if (!product) throw new Error("O produto selecionado já não está ativo.");
         const customerResult = findOrCreateCustomer(current.customers, saleCustomerId, enteredBuyerName);
+        const available = current.units
+          .filter((unit) => unit.productId === product.id && unit.status === "READY_TO_SHIP")
+          .sort((a, b) => a.acquiredAt.localeCompare(b.acquiredAt));
+        if (available.length && sellQuantity > available.length) {
+          throw new Error("Não há unidades suficientes em stock.");
+        }
+        const soldUnits = available.slice(0, available.length ? sellQuantity : 0);
         const savedSale = { ...sale, buyerName: enteredBuyerName, customerId: customerResult.customer.id };
         const payments = paidAmount
           ? [{
@@ -200,8 +209,27 @@ export function StockPage() {
         const next = {
           ...current,
           customers: customerResult.customers,
-          sales: [savedSale, ...current.sales],
+          sales: [{
+            ...savedSale,
+            lines: savedSale.lines.map((item) => ({ ...item, unitIds: soldUnits.map((unit) => unit.id) })),
+          }, ...current.sales],
           payments: [...payments, ...current.payments],
+          units: current.units.map((unit) =>
+            soldUnits.some((sold) => sold.id === unit.id) ? { ...unit, status: "SOLD" as const } : unit,
+          ),
+          movements: [
+            ...current.movements,
+            ...soldUnits.map((unit) => ({
+              id: makeId(),
+              unitId: unit.id,
+              type: "SALE_COMPLETED" as const,
+              quantityDelta: -1 as const,
+              fromLocationId: unit.locationId,
+              toLocationId: "",
+              occurredAt: createdAt,
+              notes: saleStatus === "COMPLETED" ? "Venda concluída" : "Venda pendente registada",
+            })),
+          ],
         };
         return saleStatus === "COMPLETED"
           ? completePendingSale(next, saleId)
@@ -209,9 +237,10 @@ export function StockPage() {
       });
       setSellingProductId(null);
       setFormError("");
+      const stockNote = sellQuantity === 1 ? "1 unidade saiu do stock" : `${sellQuantity} unidades saíram do stock`;
       setSavedMessage(saleStatus === "COMPLETED"
-        ? `Venda de “${sellingProduct.name}” concluída. O stock não foi alterado.`
-        : `Venda de “${sellingProduct.name}” registada como pendente.`);
+        ? `Venda de “${sellingProduct.name}” concluída. ${sellingUnits.length ? stockNote + "." : "Não havia unidades em stock para abater."}`
+        : `Venda de “${sellingProduct.name}” registada como pendente. ${sellingUnits.length ? stockNote + "." : "Não havia unidades em stock para abater."}`);
     } catch (cause) {
       setFormError(cause instanceof Error ? cause.message : "Não foi possível registar a venda.");
     }
@@ -500,10 +529,16 @@ export function StockPage() {
     .reduce((total, unit) => total + unit.acquisitionCost, 0);
   const editingProduct = data.products.find((product) => product.id === editingProductId);
   const sellingUnits = sellingProduct
-    ? data.units.filter((unit) => unit.productId === sellingProduct.id && unit.status === "READY_TO_SHIP")
+    ? data.units
+      .filter((unit) => unit.productId === sellingProduct.id && unit.status === "READY_TO_SHIP")
+      .sort((a, b) => a.acquiredAt.localeCompare(b.acquiredAt))
     : [];
-  const sellingAverageCost = sellingUnits.length
-    ? sellingUnits.reduce((sum, unit) => sum + unit.acquisitionCost, 0) / sellingUnits.length
+  const sellQuantity = sellingUnits.length
+    ? Math.min(Math.max(1, Math.floor(Number(saleQuantity)) || 1), sellingUnits.length)
+    : 1;
+  const sellingChosenUnits = sellingUnits.slice(0, sellQuantity);
+  const sellingAverageCost = sellingChosenUnits.length
+    ? sellingChosenUnits.reduce((sum, unit) => sum + unit.acquisitionCost, 0) / sellingChosenUnits.length
     : 0;
   const existingUnits = editingProduct
     ? data.units.filter((unit) => unit.productId === editingProduct.id && unit.status === "READY_TO_SHIP")
@@ -722,8 +757,13 @@ export function StockPage() {
                 <label className="form-field stock-modal__wide"><span>Produto</span><input value={sellingProduct.name} readOnly /></label>
                 <label className="form-field"><span>SKU</span><input value={sellingProduct.sku} readOnly /></label>
                 <label className="form-field"><span>Tamanho</span><input value={sellingProduct.size ?? ""} readOnly /></label>
-                <label className="form-field"><span>Venda (€)</span><input name="salePrice" type="number" min="0.01" step="0.01" required /></label>
-                <label className="form-field"><span>Custo (€)</span><input name="cost" type="number" min="0" step="0.01" defaultValue={roundMoney(sellingAverageCost)} required /></label>
+                <label className="form-field"><span>Quantidade a vender{sellingUnits.length ? ` (em stock: ${sellingUnits.length})` : " (sem stock)"}</span>{sellingUnits.length > 1
+                  ? <select value={String(sellQuantity)} onChange={(event) => setSaleQuantity(event.target.value)}>
+                    {sellingUnits.map((_, index) => <option key={index + 1} value={index + 1}>{index + 1}</option>)}
+                  </select>
+                  : <input value="1" readOnly aria-label="Quantidade a vender" />}</label>
+                <label className="form-field"><span>Preço por unidade (€)</span><input name="salePrice" type="number" min="0.01" step="0.01" required /></label>
+                <label className="form-field"><span>Custo por unidade (€)</span><input key={`${sellingProduct.id}-${sellQuantity}`} name="cost" type="number" min="0" step="0.01" defaultValue={roundMoney(sellingAverageCost)} readOnly={sellingUnits.length > 0} required /></label>
                 <label className="form-field"><span>Tipo</span><select name="saleType" value={stockSaleType} onChange={(event) => {
                   if (validStockSaleType(event.target.value)) setStockSaleType(event.target.value);
                 }}>
@@ -752,7 +792,7 @@ export function StockPage() {
                 {stockSaleType !== "PRIVATE" && declaredValue === "YES" && <label className="form-field"><span>Nº da fatura</span><input name="invoiceNumber" maxLength={80} value={invoiceNumber} onChange={(event) => setInvoiceNumber(event.target.value)} /></label>}
                 <label className="form-field stock-modal__wide"><span>Obs</span><textarea name="notes" rows={3} maxLength={1000} /></label>
               </div>
-              <p className="form-note">Podes registar a venda mesmo sem unidades disponíveis. A venda não reserva nem altera o stock. Os preços de venda são considerados finais, com IVA incluído. O IVA é uma estimativa matemática do tipo selecionado; a aplicação não valida a elegibilidade legal para taxa zero ou regime da margem.</p>
+              <p className="form-note">As unidades vendidas saem logo do stock, quer a venda fique pendente ou concluída. Se eliminares a venda, voltam ao stock. Os preços de venda são considerados finais, com IVA incluído. O IVA é uma estimativa matemática do tipo selecionado; a aplicação não valida a elegibilidade legal para taxa zero ou regime da margem.</p>
             </div>
             <footer className="sale-modal__footer">
               <button className="button" type="button" onClick={() => setSellingProductId(null)}>Cancelar</button>
