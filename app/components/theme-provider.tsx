@@ -6,18 +6,37 @@ import {
   useContext,
   useEffect,
   useMemo,
-  useState,
+  useSyncExternalStore,
 } from "react";
 
 type Theme = "light" | "dark";
+
+const THEME_KEY = "revenda-gestao.theme";
 
 const ThemeContext = createContext<{
   theme: Theme;
   toggleTheme: () => void;
 } | null>(null);
 
+function subscribeToTheme(callback: () => void) {
+  window.addEventListener("storage", callback);
+  window.addEventListener("revenda-theme", callback);
+  return () => {
+    window.removeEventListener("storage", callback);
+    window.removeEventListener("revenda-theme", callback);
+  };
+}
+
+function readTheme(): Theme {
+  try {
+    return window.localStorage.getItem(THEME_KEY) === "dark" ? "dark" : "light";
+  } catch {
+    return "light";
+  }
+}
+
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
-  const [theme, setTheme] = useState<Theme>("light");
+  const theme = useSyncExternalStore<Theme>(subscribeToTheme, readTheme, () => "light");
 
   useEffect(() => {
     document.documentElement.classList.toggle("dark", theme === "dark");
@@ -25,9 +44,12 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
   }, [theme]);
 
   const toggleTheme = useCallback(() => {
-    setTheme((currentTheme) => {
-      return currentTheme === "light" ? "dark" : "light";
-    });
+    try {
+      window.localStorage.setItem(THEME_KEY, readTheme() === "light" ? "dark" : "light");
+    } catch {
+      // Sem armazenamento disponível: o tema não fica guardado.
+    }
+    window.dispatchEvent(new Event("revenda-theme"));
   }, []);
 
   const value = useMemo(() => ({ theme, toggleTheme }), [theme, toggleTheme]);
