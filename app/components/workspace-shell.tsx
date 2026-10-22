@@ -361,8 +361,8 @@ export function WorkspaceShell({ children }: { children: React.ReactNode }) {
           <div className="local-status">
             <span className="local-status__dot" />
             <div>
-              <strong>Modo local</strong>
-              <span>{error ? "Erro no armazenamento" : ready ? "Dados neste browser" : "A carregar dados…"}</span>
+              <strong>{sync === "error" ? "Sem ligação" : "Online"}</strong>
+              <span>{error ? "Erro no armazenamento" : !ready ? "A carregar dados…" : sync === "saved" ? "Guardado na base de dados" : sync === "saving" ? "A guardar…" : sync === "error" ? "Não guardado online" : "A ligar…"}</span>
             </div>
           </div>
           <button
