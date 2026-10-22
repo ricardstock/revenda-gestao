@@ -999,6 +999,20 @@ button {
 .pending-sales-page:not(.completed-sales-page) .pending-sales-table th:nth-child(16) { width: 85px; }
 .pending-sales-page:not(.completed-sales-page) .pending-sales-table th:nth-child(17) { width: 65px; }
 .pending-sales-page:not(.completed-sales-page) .pending-sales-table th:nth-child(18) { width: 340px; }
+.pending-sales-table tbody td {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.pending-sales-table tbody td:nth-child(2),
+.pending-sales-table tbody td:nth-child(3),
+.pending-sales-table tbody td:nth-child(4),
+.pending-sales-table tbody td:nth-child(12) {
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+.pending-sales-table tbody td.sales-actions-cell {
+  overflow: visible;
+}
 
 .sales-actions-heading,
 .sales-actions-cell {
