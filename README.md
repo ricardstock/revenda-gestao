@@ -1,36 +1,74 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Revenda Gestão
 
-## Getting Started
+Plataforma de gestão de revenda em desenvolvimento. Os fluxos disponíveis
+guardam os registos no `localStorage` do browser para desenvolvimento e
+avaliação. Este armazenamento não é adequado para dados comerciais reais.
 
-First, run the development server:
+## Executar a interface local
 
-```bash
+Requer Node.js e npm.
+
+```powershell
+npm install
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Abra [http://localhost:3000](http://localhost:3000). Os dados são persistidos
+no armazenamento local do perfil do browser. Separadores do mesmo perfil
+partilham alterações, mas não há contas, sincronização com servidor,
+isolamento entre utilizadores ou cópias de segurança automáticas. A secção
+Definições permite exportar uma cópia JSON e limpar o armazenamento local.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+As vendas só descontam stock ao serem concluídas e exigem unidades disponíveis.
+Pagamentos acumulados não podem exceder o total da venda; reembolsos acumulados
+não podem exceder pagamentos ainda não reembolsados. Receções parciais criam
+apenas as unidades recebidas e os movimentos ficam no histórico.
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+Os indicadores financeiros distinguem lucro bruto (venda menos custo de
+compra), margem bruta (lucro bruto sobre o valor vendido) e rentabilidade sobre
+o custo de compra. Percentagens sem denominador positivo são apresentadas como
+indisponíveis; se faltar preço ou custo, o lucro correspondente também não é
+inventado. Uma unidade devolvida e aprovada para revenda deixa de contar como
+custo vendido.
 
-## Learn More
+O lucro líquido e o IVA são estimativas baseadas nas regras fiscais atualmente
+codificadas por tipo de venda, não um apuramento contabilístico. As despesas
+associadas a uma venda podem ser ligadas ao registo; despesas sem venda são
+incluídas nos totais do período. IVA manualmente registado não é deduzido de
+novo quando o indicador já desconta uma estimativa de IVA. Se o envio estiver
+preenchido na venda, uma despesa associada na categoria Envios também não é
+somada outra vez.
 
-To learn more about Next.js, take a look at the following resources:
+Antes de usar as estimativas para decisões fiscais, é necessário confirmar se
+os preços incluem IVA, a incidência efetiva de cada regime (incluindo PRIVATE,
+MARGIN, VAT23% e VAT0%), e o tratamento de IVA liquidado/dedutível e despesas
+de IVA. Valores por receber correspondem ao total de vendas pendentes e
+concluídas no período menos os pagamentos registados; compras correspondem ao
+total encomendado, excluindo compras canceladas.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+Não introduza dados pessoais ou comerciais reais neste modo. A exportação CSV
+e os indicadores são operacionais e não substituem registos contabilísticos ou
+cálculos fiscais.
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## Preparação Supabase
 
-## Deploy on Vercel
+Consulte [supabase/README.md](./supabase/README.md) para executar as migrações
+e testes apenas num ambiente Supabase local descartável. Não ligue o CLI a um
+projeto remoto nem execute `supabase db push` nesta etapa.
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## Estado da etapa
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- Interface, formulários e fluxos locais: disponíveis em modo de desenvolvimento.
+- Persistência: `localStorage` do perfil do browser; não é uma base de dados segura.
+- PostgreSQL/Supabase: clientes browser/servidor preparados; migrações e testes
+  SQL não executados. A integração comercial e a autenticação continuam por
+  implementar e validar.
+- Regras fiscais: valores de IVA e lucro líquido são estimativas locais, por
+  validar com contabilista; não servem como declaração fiscal.
+- Publicação e autenticação para utilização real: ainda não configuradas.
+
+Para validar as fórmulas financeiras locais:
+
+```powershell
+npm run test:financial
+```
