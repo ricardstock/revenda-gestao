@@ -37,7 +37,7 @@ const GOALS_STORAGE_KEY = "revenda-gestao.dashboard-goals.v1";
 const saleTypeLabels: Record<string, string> = {
   PRIVATE: "Private",
   MARGIN: "Margin",
-  "VAT23%": "VAT",
+  "VAT23%": "VAT 23%",
   "VAT0%": "VAT 0%",
 };
 const emptyGoals: DashboardGoals = { profit: 0, revenue: 0, sales: 0 };

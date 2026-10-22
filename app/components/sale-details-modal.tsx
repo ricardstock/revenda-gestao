@@ -76,7 +76,7 @@ export function SaleDetailsModal({
         </div>
         <dl className="sale-details__list">
           <div><dt>Data</dt><dd>{new Intl.DateTimeFormat("pt-PT").format(new Date(`${sale.soldAt.slice(0, 10)}T12:00:00`))}</dd></div>
-          <div><dt>Tipo</dt><dd>{sale.saleType.replace("%", "")}</dd></div>
+          <div><dt>Tipo</dt><dd>{sale.saleType.replace(/^VAT(\d+)%$/, "VAT $1%")}</dd></div>
           <div><dt>Nº da fatura</dt><dd>{sale.invoiceNumber || "—"}</dd></div>
           <div><dt>Pagamento</dt><dd>{paid}</dd></div>
           <div><dt>Fornecedor</dt><dd>{supplier?.name || "—"}</dd></div>

@@ -767,7 +767,7 @@ export function StockPage() {
                 <label className="form-field"><span>Tipo</span><select name="saleType" value={stockSaleType} onChange={(event) => {
                   if (validStockSaleType(event.target.value)) setStockSaleType(event.target.value);
                 }}>
-                  <option value="PRIVATE">Private</option><option value="MARGIN">Margin</option><option value="VAT23%">VAT</option><option value="VAT0%">VAT 0%</option>
+                  <option value="PRIVATE">Private</option><option value="MARGIN">Margin</option><option value="VAT23%">VAT 23%</option><option value="VAT0%">VAT 0%</option>
                 </select></label>
                 <label className="form-field"><span>Estado</span><select name="saleStatus" value={saleStatus} onChange={(event) => {
                   if (event.target.value === "PENDING" || event.target.value === "COMPLETED") {

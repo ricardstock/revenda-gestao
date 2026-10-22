@@ -29,7 +29,7 @@ type PaymentMode = "KEEP" | "PENDING" | "PARTIAL" | "PAID";
 const saleTypes = [
   { value: "PRIVATE", label: "Private" },
   { value: "MARGIN", label: "Margin" },
-  { value: "VAT23%", label: "VAT" },
+  { value: "VAT23%", label: "VAT 23%" },
   { value: "VAT0%", label: "VAT 0%" },
 ] as const;
 
@@ -366,7 +366,7 @@ export function CompletedSalesPage() {
                     <td data-label="Margem bruta">{financials.grossMarginPercent === null ? "—" : <PrivacyValue>{financials.grossMarginPercent.toLocaleString("pt-PT", { maximumFractionDigits: 1 })}%</PrivacyValue>}</td>
                     <td data-label="Lucro final estimado">{financials.netProfitEstimate === null ? "—" : <FinancialValue value={financials.netProfitEstimate}><PrivacyValue>{formatEur(financials.netProfitEstimate)}</PrivacyValue></FinancialValue>}</td>
                     <td data-label="Margem líquida estimada">{financials.netMarginPercent === null ? "—" : <PrivacyValue>{financials.netMarginPercent.toLocaleString("pt-PT", { maximumFractionDigits: 1 })}%</PrivacyValue>}</td>
-                    <td data-label="Tipo">{sale.saleType.replace("%", "")}</td>
+                    <td data-label="Tipo">{sale.saleType.replace(/^VAT(\d+)%$/, "VAT $1%")}</td>
                     <td data-label="Fornecedor">{supplier?.name || "—"}</td>
                     <td data-label="IVA estimado">{financials.vatEstimate === null ? "—" : <FinancialValue value={-financials.vatEstimate}><PrivacyValue>{formatEur(financials.vatEstimate)}</PrivacyValue></FinancialValue>}</td>
                     <td data-label="Pagamento"><PaymentStatusBadge sale={sale} payments={data.payments} /></td>

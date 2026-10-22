@@ -175,7 +175,7 @@ export function StatisticsPage({ mode }: { mode: StatisticsMode }) {
       .map(([type, amount]) => ({
         type,
         amount: sumMoney([amount]),
-        label: type.replace("%", ""),
+        label: type.replace(/^VAT(\d+)%$/, "VAT $1%"),
       }))
       .sort((a, b) => b.amount - a.amount);
   }, [selected]);
