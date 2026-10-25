@@ -3160,7 +3160,15 @@ button {
 }
 
 .pending-sales-table-wrap {
-  overflow-x: auto;
+  overflow: auto;
+  max-height: calc(100vh - 120px);
+}
+
+.pending-sales-table-wrap thead th {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  background: var(--surface-muted);
 }
 
 .customer-autocomplete {

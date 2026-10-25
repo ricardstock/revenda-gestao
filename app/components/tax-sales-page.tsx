@@ -177,7 +177,7 @@ export function TaxSalesPage() {
             onChange={(event) => setQuery(event.target.value)}
           />
         </div>
-        <div className="table-wrap">
+        <div className="table-wrap pending-sales-table-wrap">
           <table className="data-table tax-sales-table">
             <thead>
               <tr>
