@@ -3229,6 +3229,7 @@ button {
 .pending-sales-table-wrap {
   overflow: auto;
   max-height: calc(100vh - 120px);
+  padding-top: 0;
 }
 
 .pending-sales-table-wrap thead th {
