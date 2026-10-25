@@ -3995,3 +3995,14 @@ button {
   color: var(--danger);
   font-size: 12px;
 }
+
+@media (min-width: 1001px) {
+  .pending-sales-table th:nth-child(n + 3):not(.sales-actions-heading),
+  .pending-sales-table tbody td:nth-child(n + 3):not(.sales-actions-cell):not(.table-empty) {
+    text-align: center;
+  }
+  .pending-sales-table th:nth-child(n + 3) .declared-badge,
+  .pending-sales-table tbody td:nth-child(n + 3) .declared-badge {
+    margin-inline: auto;
+  }
+}
