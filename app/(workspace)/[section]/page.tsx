@@ -7,6 +7,7 @@ import { ContactsPage } from "../../components/contacts-page";
 import { ExpensesPage } from "../../components/expenses-page";
 import { PendingSalesPage } from "../../components/pending-sales-page";
 import { CompletedSalesPage } from "../../components/completed-sales-page";
+import { TaxSalesPage } from "../../components/tax-sales-page";
 import { StatisticsPage } from "../../components/statistics-page";
 import {
   navigationItems,
@@ -44,6 +45,7 @@ async function SectionContent({
   if (section === "despesas") return <ExpensesPage />;
   if (section === "encomendas-pendentes") return <PendingSalesPage />;
   if (section === "vendas") return <CompletedSalesPage />;
+  if (section === "vendas-iva-margem") return <TaxSalesPage />;
   if (section === "estatisticas-mensais") return <StatisticsPage mode="monthly" />;
   if (section === "estatisticas-trimestrais") return <StatisticsPage mode="quarterly" />;
   redirect("/");

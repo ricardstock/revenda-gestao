@@ -1057,6 +1057,44 @@ button {
   justify-self: stretch;
 }
 
+.tax-sales-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.tax-sales-tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  border: 1px solid var(--border-strong);
+  border-radius: 999px;
+  background: var(--surface);
+  padding: 7px 14px;
+  color: var(--muted-strong);
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.tax-sales-tab span {
+  border-radius: 999px;
+  background: var(--surface-muted);
+  padding: 1px 7px;
+  font-size: 11px;
+}
+.tax-sales-tab--active {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+  color: var(--accent);
+}
+.tax-sales-summary {
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+}
+@media (max-width: 1000px) {
+  .tax-sales-summary {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
 /* Layout uniforme: todas as páginas centradas com a mesma largura */
 .main-content {
   width: min(100%, 1320px);

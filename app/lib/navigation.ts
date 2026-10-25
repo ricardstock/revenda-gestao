@@ -1,6 +1,7 @@
 export type SectionId =
   | "produtos"
   | "vendas"
+  | "vendas-iva-margem"
   | "encomendas-pendentes"
   | "compras-entregas"
   | "stock"
@@ -54,6 +55,12 @@ export const navigationItems: NavigationItem[] = [
     label: "Vendas concluídas",
     href: "/vendas",
     description: "Consulte vendas concluídas e o stock associado.",
+  },
+  {
+    id: "vendas-iva-margem",
+    label: "Vendas VAT e Margin",
+    href: "/vendas-iva-margem",
+    description: "Vendas concluídas e estatísticas dos tipos VAT 23%, VAT 0% e Margin.",
   },
   {
     id: "encomendas-pendentes",
@@ -138,6 +145,7 @@ export const navigationItems: NavigationItem[] = [
 export const pageTitles: Record<SectionId, string> = {
   produtos: "Produtos",
   vendas: "Vendas concluídas",
+  "vendas-iva-margem": "Vendas VAT e Margin",
   "encomendas-pendentes": "Vendas pendentes",
   "compras-entregas": "Compras e entregas",
   "produtos-a-caminho": "Produtos a caminho",
