@@ -139,7 +139,6 @@ export function TaxSalesPage() {
             <option value="ALL">Todos</option>
             <option value="YES">Sim</option>
             <option value="NO">Não</option>
-            <option value="PRIVATE">Private</option>
           </select></label>
         <label className="form-field"><span>Ordenar por</span>
           <select value={sort} onChange={(event) => setSort(event.target.value)}>
