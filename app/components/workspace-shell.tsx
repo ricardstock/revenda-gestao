@@ -14,6 +14,7 @@ import {
 import { signOut } from "../login/actions";
 import { isLegacyBackup } from "../lib/legacy-import";
 import { Icon } from "./icons";
+import { AccountModal } from "./account-modal";
 import { useLocalData } from "./local-data-provider";
 import { useTheme } from "./theme-provider";
 
@@ -71,6 +72,7 @@ function normalizeSearchText(value: string) {
 export function WorkspaceShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const { theme, toggleTheme } = useTheme();
+  const [accountOpen, setAccountOpen] = useState(false);
   const { data, ready, error, sync, retrySync, replaceAll, mergeLegacy } = useLocalData();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
@@ -541,13 +543,14 @@ export function WorkspaceShell({ children }: { children: React.ReactNode }) {
               <Icon name={theme === "light" ? "moon" : "sun"} size={19} />
             </button>
             <span className="topbar__divider" />
-            <div className="profile-link" aria-label="Perfil local">
+            <button className="profile-link" type="button" aria-label="Abrir conta" title="Alterar email e palavra-passe" onClick={() => setAccountOpen(true)}>
               <span className="profile-avatar">U</span>
               <span className="profile-link__text">
                 <strong>Utilizador</strong>
-                <small>Perfil local</small>
+                <small>Conta</small>
               </span>
-            </div>
+            </button>
+            {accountOpen && <AccountModal onClose={() => setAccountOpen(false)} />}
             <form action={signOut}>
               <button type="submit" className="button button--small" title="Terminar sessão">
                 Sair
