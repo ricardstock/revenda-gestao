@@ -313,7 +313,15 @@ export function PendingSalesPage() {
           };
         }
 
-        return completePendingSale(current, sale.id);
+        const completed = completePendingSale(current, sale.id);
+        const completedOn = localDateString(new Date());
+        return {
+          ...completed,
+          sales: completed.sales.map((item) => item.id === sale.id ? { ...item, soldAt: completedOn } : item),
+          payments: completed.payments.map((payment) =>
+            payment.saleId === sale.id && payment.paidAt === sale.soldAt ? { ...payment, paidAt: completedOn } : payment,
+          ),
+        };
       });
       setFormError("");
       setNotice(status === "COMPLETED"
