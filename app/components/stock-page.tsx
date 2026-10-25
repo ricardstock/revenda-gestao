@@ -493,7 +493,7 @@ export function StockPage() {
   }
 
   function deleteProduct(product: Product) {
-    if (!window.confirm(`Eliminar “${product.name}” de vez? Isto apaga o produto, as suas unidades e movimentos, e não pode ser desfeito.`)) return;
+    if (!window.confirm(`Eliminar “${product.name}” de vez? Isto apaga o produto da página do Stock. As vendas e as estatísticas não são alteradas.`)) return;
     try {
       update((current) => {
         const target = current.products.find((item) => item.id === product.id);
@@ -502,21 +502,15 @@ export function StockPage() {
         const unitIds = new Set(
           current.units.filter((unit) => unit.productId === product.id).map((unit) => unit.id),
         );
-        const usedBySale = current.sales.some((sale) =>
-          sale.lines.some((line) => line.unitIds.some((unitId) => unitIds.has(unitId))),
-        );
-        const usedByReturn = current.returns.some((record) => unitIds.has(record.unitId));
-        const usedByPurchase = current.purchases.some((purchase) =>
-          purchase.lines.some((line) => line.productId === product.id),
-        );
-        if (usedBySale || usedByReturn || usedByPurchase) {
-          throw new Error("Este produto tem vendas, devoluções ou compras associadas e não pode ser eliminado. Deixa-o como removido.");
-        }
+        const keptUnitIds = new Set([
+          ...current.sales.flatMap((sale) => sale.lines.flatMap((line) => line.unitIds)),
+          ...current.returns.map((record) => record.unitId),
+        ]);
         return {
           ...current,
           products: current.products.filter((item) => item.id !== product.id),
-          units: current.units.filter((unit) => !unitIds.has(unit.id)),
-          movements: current.movements.filter((movement) => !unitIds.has(movement.unitId)),
+          units: current.units.filter((unit) => !unitIds.has(unit.id) || keptUnitIds.has(unit.id)),
+          movements: current.movements.filter((movement) => !unitIds.has(movement.unitId) || keptUnitIds.has(movement.unitId)),
           sales: current.sales.map((sale) => sale.lines.some((line) => line.productId === product.id)
             ? { ...sale, lines: sale.lines.map((line) => line.productId === product.id ? { ...line, productId: "" } : line) }
             : sale),
