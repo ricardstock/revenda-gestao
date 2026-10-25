@@ -19,6 +19,7 @@ import {
   type SaleLine,
 } from "../lib/local-data";
 import { useLocalData } from "./local-data-provider";
+import { SaleFiltersBar, applySaleFilters, defaultSaleFilters, type SaleFilters } from "./sale-filters";
 import { FinancialValue, PaymentStatusBadge, PrivacyValue } from "./workspace-shell";
 import { CustomerAutocomplete } from "./customer-autocomplete";
 import { SaleDetailsModal } from "./sale-details-modal";
@@ -49,6 +50,7 @@ function saleProductText(sale: Sale) {
 export function CompletedSalesPage() {
   const { data, ready, error, update } = useLocalData();
   const [query, setQuery] = useState("");
+  const [filters, setFilters] = useState<SaleFilters>(defaultSaleFilters);
   const [modalOpen, setModalOpen] = useState(false);
   const [editingSale, setEditingSale] = useState<Sale | null>(null);
   const [detailsSale, setDetailsSale] = useState<Sale | null>(null);
@@ -67,13 +69,16 @@ export function CompletedSalesPage() {
   const total = completedSales.reduce((sum, sale) => sum + saleTotal(sale), 0);
   const rows = useMemo(() => {
     const search = query.trim().toLocaleLowerCase("pt-PT");
-    return data.sales
-      .filter((sale) => sale.status === "COMPLETED")
+    return applySaleFilters(
+      data.sales.filter((sale) => sale.status === "COMPLETED"),
+      filters,
+      data,
+      (sale) => paymentStatus(sale, data.payments),
+    )
       .filter((sale) => `${sale.buyerName ?? ""} ${saleProductText(sale)} ${sale.notes}`
         .toLocaleLowerCase("pt-PT")
-        .includes(search))
-      .sort((a, b) => b.soldAt.localeCompare(a.soldAt));
-  }, [data.sales, query]);
+        .includes(search));
+  }, [data, query, filters]);
 
   function openModal() {
     setToday(localDateString(new Date()));
@@ -341,6 +346,7 @@ export function CompletedSalesPage() {
             onChange={(event) => setQuery(event.target.value)}
           />
         </div>
+        <SaleFiltersBar filters={filters} onChange={setFilters} />
         <div className="table-wrap pending-sales-table-wrap">
           <table className="data-table pending-sales-table completed-sales-table">
             <thead><tr><th>Data</th><th>SKU / Nome</th><th>Tam.</th><th>Comprador</th><th>Custo</th><th>Venda</th><th>Lucro bruto</th><th>Margem bruta</th><th>Lucro final estimado</th><th>Margem líquida estimada</th><th>Tipo</th><th>Fornecedor</th><th>IVA estimado</th><th>Pagamento</th><th>Declarado?</th><th>Track</th><th className="sales-actions-heading">Ações</th></tr></thead>

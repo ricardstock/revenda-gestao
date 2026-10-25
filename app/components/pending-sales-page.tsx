@@ -20,6 +20,7 @@ import {
   type SaleLine,
 } from "../lib/local-data";
 import { useLocalData } from "./local-data-provider";
+import { SaleFiltersBar, applySaleFilters, defaultSaleFilters, type SaleFilters } from "./sale-filters";
 import { FinancialValue, PaymentStatusBadge, PrivacyValue } from "./workspace-shell";
 import { CustomerAutocomplete } from "./customer-autocomplete";
 import { SaleDetailsModal } from "./sale-details-modal";
@@ -67,6 +68,7 @@ export function PendingSalesPage() {
   const [supplierId, setSupplierId] = useState("");
   const [showCancelled, setShowCancelled] = useState(false);
   const [query, setQuery] = useState("");
+  const [filters, setFilters] = useState<SaleFilters>(defaultSaleFilters);
   const [formError, setFormError] = useState("");
   const [notice, setNotice] = useState("");
 
@@ -79,8 +81,12 @@ export function PendingSalesPage() {
   const pendingTotal = pendingSales.reduce((total, sale) => total + saleTotal(sale), 0);
   const rows = useMemo(() => {
     const search = query.trim().toLocaleLowerCase("pt-PT");
-    return data.sales
-      .filter((sale) => sale.status === "PENDING" || (showCancelled && sale.status === "CANCELLED"))
+    return applySaleFilters(
+      data.sales.filter((sale) => sale.status === "PENDING" || (showCancelled && sale.status === "CANCELLED")),
+      filters,
+      data,
+      (sale) => paymentStatus(sale, data.payments),
+    )
       .filter((sale) => {
         const productText = sale.lines
           .map((line) => `${line.productName ?? ""} ${line.sku ?? ""} ${line.size ?? ""}`)
@@ -89,9 +95,8 @@ export function PendingSalesPage() {
         return `${sale.buyerName ?? ""} ${productText} ${supplier} ${sale.notes}`
           .toLocaleLowerCase("pt-PT")
           .includes(search);
-      })
-      .sort((a, b) => b.soldAt.localeCompare(a.soldAt));
-  }, [data.sales, data.suppliers, query, showCancelled]);
+      });
+  }, [data, query, showCancelled, filters]);
 
   function saveSale(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -422,6 +427,7 @@ export function PendingSalesPage() {
             </label>
           </div>
         </div>
+        <SaleFiltersBar filters={filters} onChange={setFilters} />
         <div className="table-wrap pending-sales-table-wrap">
           <table className="data-table pending-sales-table">
             <thead><tr><th>Data</th><th>SKU / Nome</th><th>Tam.</th><th>Comprador</th><th>Custo</th><th>Venda</th><th>Lucro bruto</th><th>Margem bruta</th><th>Lucro final estimado</th><th>Margem líquida estimada</th><th>Tipo</th><th>Fornecedor</th><th>IVA estimado</th><th>Pagamento</th><th>Estado</th><th>Declarado?</th><th>Track</th><th className="sales-actions-heading">Ações</th></tr></thead>
