@@ -4023,6 +4023,14 @@ button {
 }
 
 @media (min-width: 1001px) {
+  .data-table th:not(:first-child),
+  .data-table tbody td:not(:first-child):not(.table-empty) {
+    text-align: center;
+  }
+  .data-table .sales-actions-heading,
+  .data-table .sales-actions-cell {
+    text-align: left;
+  }
   .pending-sales-table th:nth-child(n + 3):not(.sales-actions-heading),
   .pending-sales-table tbody td:nth-child(n + 3):not(.sales-actions-cell):not(.table-empty) {
     text-align: center;
