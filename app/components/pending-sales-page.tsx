@@ -21,6 +21,7 @@ import {
 } from "../lib/local-data";
 import { useLocalData } from "./local-data-provider";
 import { SaleFiltersBar, applySaleFilters, defaultSaleFilters, type SaleFilters } from "./sale-filters";
+import { BulkSaleBar } from "./bulk-sale-edit";
 import { FinancialValue, PaymentStatusBadge, PrivacyValue } from "./workspace-shell";
 import { CustomerAutocomplete } from "./customer-autocomplete";
 import { SaleDetailsModal } from "./sale-details-modal";
@@ -69,6 +70,7 @@ export function PendingSalesPage() {
   const [showCancelled, setShowCancelled] = useState(false);
   const [query, setQuery] = useState("");
   const [filters, setFilters] = useState<SaleFilters>(defaultSaleFilters);
+  const [selected, setSelected] = useState<string[]>([]);
   const [formError, setFormError] = useState("");
   const [notice, setNotice] = useState("");
 
@@ -428,9 +430,14 @@ export function PendingSalesPage() {
           </div>
         </div>
         <SaleFiltersBar filters={filters} onChange={setFilters} />
+        <BulkSaleBar
+          selectedIds={rows.filter((sale) => selected.includes(sale.id)).map((sale) => sale.id)}
+          onClear={() => setSelected([])}
+          onNotice={(message, isError) => { if (isError) { setFormError(message); setNotice(""); } else { setNotice(message); setFormError(""); } }}
+        />
         <div className="table-wrap pending-sales-table-wrap">
           <table className="data-table pending-sales-table">
-            <thead><tr><th>Data</th><th>SKU / Nome</th><th>Tam.</th><th>Comprador</th><th>Custo</th><th>Venda</th><th>Lucro bruto</th><th>Margem bruta</th><th>Lucro final estimado</th><th>Margem líquida estimada</th><th>Tipo</th><th>Fornecedor</th><th>IVA estimado</th><th>Pagamento</th><th>Estado</th><th>Declarado?</th><th>Track</th><th className="sales-actions-heading">Ações</th></tr></thead>
+            <thead><tr><th><label className="select-cell"><input type="checkbox" aria-label="Selecionar todas" checked={rows.length > 0 && rows.every((sale) => selected.includes(sale.id))} onChange={(event) => setSelected(event.target.checked ? rows.map((sale) => sale.id) : [])} />Data</label></th><th>SKU / Nome</th><th>Tam.</th><th>Comprador</th><th>Custo</th><th>Venda</th><th>Lucro bruto</th><th>Margem bruta</th><th>Lucro final estimado</th><th>Margem líquida estimada</th><th>Tipo</th><th>Fornecedor</th><th>IVA estimado</th><th>Pagamento</th><th>Estado</th><th>Declarado?</th><th>Track</th><th className="sales-actions-heading">Ações</th></tr></thead>
             <tbody>
               {!ready
                 ? <tr><td className="table-empty" colSpan={18}>A carregar vendas locais…</td></tr>
@@ -441,7 +448,7 @@ export function PendingSalesPage() {
                     const financials = calculateSaleFinancialMetrics(sale, data);
                     const supplier = data.suppliers.find((item) => item.id === sale.supplierId);
                     return <tr key={sale.id}>
-                      <td data-label="Data">{formatDate(sale.soldAt)}</td>
+                      <td data-label="Data"><label className="select-cell"><input type="checkbox" aria-label="Selecionar venda" checked={selected.includes(sale.id)} onChange={(event) => setSelected((current) => event.target.checked ? [...current, sale.id] : current.filter((id) => id !== sale.id))} />{formatDate(sale.soldAt)}</label></td>
                       <td data-label="SKU / Nome">
                         <strong>{line?.sku || "—"}</strong>
                         <span className="pending-sale-product-detail">{line?.productName || "Produto"}</span>

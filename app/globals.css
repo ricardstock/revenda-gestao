@@ -530,7 +530,7 @@ button {
   color: var(--accent);
 }
 
-.workspace--stream-mode input[type="number"] {
+.workspace--stream-mode input[type="number"]:not([name="saleQuantity"]) {
   color: transparent;
   caret-color: transparent;
   text-shadow: none;
@@ -974,7 +974,7 @@ button {
   table-layout: fixed;
 }
 
-.pending-sales-table th:nth-child(1) { width: 96px; }
+.pending-sales-table th:nth-child(1) { width: 120px; }
 .pending-sales-table th:nth-child(2) { width: 190px; }
 .pending-sales-table th:nth-child(3) { width: 55px; }
 .pending-sales-table th:nth-child(4) { width: 130px; }
@@ -1085,6 +1085,42 @@ button {
   border-color: var(--accent);
   background: var(--accent-soft);
   color: var(--accent);
+}
+.select-cell {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+}
+.select-cell input {
+  width: 15px;
+  height: 15px;
+  accent-color: var(--accent);
+}
+.bulk-sale-bar {
+  margin: 14px 22px 0;
+  border: 1px solid var(--accent);
+  border-radius: 10px;
+  background: var(--accent-soft);
+  padding: 12px 16px;
+}
+.bulk-sale-bar__top {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  font-size: 13px;
+}
+.bulk-sale-bar__top > div {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.bulk-sale-bar__form p {
+  margin: 12px 0 10px;
+  color: var(--muted);
+  font-size: 11px;
 }
 .tax-sales-filters {
   display: flex;
