@@ -8,7 +8,6 @@ import {
   localDateString,
   makeId,
   completePendingSale,
-  allocateStockToSales,
   deleteSaleAndRelatedData,
   duplicateSaleWithPayments,
   paymentStatus,
@@ -261,16 +260,11 @@ export function PendingSalesPage() {
             reference: "",
           }]
           : [];
-        const allocation = editingSale
-          ? null
-          : allocateStockToSales(current, sales, new Date().toISOString());
         return {
           ...current,
           customers: customerResult.customers,
           suppliers: supplierResult.suppliers,
-          sales: allocation ? [...allocation.sales, ...current.sales] : sales,
-          units: allocation?.units ?? current.units,
-          movements: allocation?.movements ?? current.movements,
+          sales: editingSale ? sales : [...sales, ...current.sales],
           payments: [...editPayment, ...payments, ...current.payments],
         };
       });
