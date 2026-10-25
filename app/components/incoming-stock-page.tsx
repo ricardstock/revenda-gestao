@@ -34,6 +34,7 @@ function isWebUrl(value: string) {
 export function IncomingStockPage() {
   const { data, ready, error, update } = useLocalData();
   const [modalOpen, setModalOpen] = useState(false);
+  const [editingItem, setEditingItem] = useState<IncomingStockItem | null>(null);
   const [orderedAt, setOrderedAt] = useState("");
   const [showReceived, setShowReceived] = useState(false);
   const [selectedSupplierId, setSelectedSupplierId] = useState("");
@@ -139,7 +140,7 @@ export function IncomingStockPage() {
       }
 
       const item: IncomingStockItem = {
-        id: makeId(),
+        id: editingItem?.id ?? makeId(),
         sku,
         size,
         name,
@@ -155,17 +156,61 @@ export function IncomingStockPage() {
         if (supplierId && !current.suppliers.some((supplier) => supplier.id === supplierId)) {
           throw new Error("O fornecedor selecionado já não existe.");
         }
+        if (editingItem) {
+          const stored = current.incomingProducts.find((entry) => entry.id === editingItem.id);
+          if (!stored || stored.receivedAt) {
+            throw new Error("Este produto já foi recebido ou já não está na lista.");
+          }
+          return {
+            ...current,
+            incomingProducts: current.incomingProducts.map((entry) => entry.id === item.id ? item : entry),
+          };
+        }
         return { ...current, incomingProducts: [item, ...current.incomingProducts] };
       });
       setModalOpen(false);
       setFormError("");
-      setSavedMessage(`“${name}” foi registado em Produtos a caminho.`);
+      setSavedMessage(editingItem
+        ? `“${name}” foi atualizado.`
+        : `“${name}” foi registado em Produtos a caminho.`);
+      setEditingItem(null);
       setSelectedSupplierId("");
       setAddingSupplier(false);
       setSupplierNotice("");
       form.reset();
     } catch (cause) {
       setFormError(cause instanceof Error ? cause.message : "Não foi possível guardar o produto.");
+    }
+  }
+
+  function openEdit(item: IncomingStockItem) {
+    setEditingItem(item);
+    setOrderedAt(item.orderedAt);
+    setSelectedSupplierId(item.supplierId ?? "");
+    setFormError("");
+    setAddingSupplier(false);
+    setSupplierNotice("");
+    setModalOpen(true);
+  }
+
+  function deleteIncoming(item: IncomingStockItem) {
+    if (!window.confirm(`Eliminar “${item.name}” dos produtos a caminho? Esta ação não pode ser anulada.`)) return;
+    try {
+      update((current) => {
+        const stored = current.incomingProducts.find((entry) => entry.id === item.id);
+        if (!stored || stored.receivedAt) {
+          throw new Error("Este produto já foi recebido ou já não está na lista.");
+        }
+        return {
+          ...current,
+          incomingProducts: current.incomingProducts.filter((entry) => entry.id !== item.id),
+        };
+      });
+      setSavedMessage(`“${item.name}” foi eliminado.`);
+      setFormError("");
+    } catch (cause) {
+      setFormError(cause instanceof Error ? cause.message : "Não foi possível eliminar o produto.");
+      setSavedMessage("");
     }
   }
 
@@ -268,6 +313,8 @@ export function IncomingStockPage() {
           className="button button--primary"
           type="button"
           onClick={() => {
+            setEditingItem(null);
+            setOrderedAt(localDateString(new Date()));
             setFormError("");
             setSelectedSupplierId("");
             setAddingSupplier(false);
@@ -345,9 +392,13 @@ export function IncomingStockPage() {
                   <td className="incoming-actions-cell" data-label="Ações">
                     {item.receivedAt
                       ? <span className="incoming-received-badge">Recebido · {formatDate(item.receivedAt.slice(0, 10))}</span>
-                      : <button className="button button--small button--primary" type="button" onClick={() => markAsReceived(item)}>
-                        Marcar como recebido
-                      </button>}
+                      : <>
+                        <button className="button button--small button--primary" type="button" onClick={() => markAsReceived(item)}>
+                          Marcar como recebido
+                        </button>
+                        <button className="button button--small" type="button" onClick={() => openEdit(item)}>Editar</button>
+                        <button className="button button--small button--danger" type="button" onClick={() => deleteIncoming(item)}>Eliminar</button>
+                      </>}
                   </td>
                 </tr>
               )) : (
@@ -365,19 +416,19 @@ export function IncomingStockPage() {
       }}>
         <section className="sale-modal stock-modal" role="dialog" aria-modal="true" aria-labelledby="incoming-modal-title">
           <header className="sale-modal__header">
-            <h2 id="incoming-modal-title">Stock a Caminho</h2>
+            <h2 id="incoming-modal-title">{editingItem ? "Editar produto a caminho" : "Stock a Caminho"}</h2>
             <button className="sale-modal__close" type="button" aria-label="Fechar" onClick={() => setModalOpen(false)}>×</button>
           </header>
-          <form onSubmit={saveIncomingProduct}>
+          <form key={editingItem?.id ?? "new"} onSubmit={saveIncomingProduct}>
             <div className="sale-modal__body">
               {formError && <p className="feedback feedback--error" role="alert">{formError}</p>}
               <div className="form-grid">
-                <label className="form-field"><span>SKU</span><input name="sku" required autoFocus /></label>
-                <label className="form-field"><span>Tamanho</span><input name="size" /></label>
-                <label className="form-field stock-modal__wide"><span>Produto</span><input name="name" required /></label>
-                <label className="form-field"><span>Quantidade</span><input name="quantity" type="number" min="1" step="1" defaultValue="1" required /></label>
-                <label className="form-field"><span>Custo unit. (€)</span><input name="unitCost" type="number" min="0" step="0.01" required /></label>
-                <label className="form-field"><span>Tipo</span><select name="purchaseType" defaultValue="PRIVATE" required>
+                <label className="form-field"><span>SKU</span><input name="sku" required autoFocus defaultValue={editingItem?.sku} /></label>
+                <label className="form-field"><span>Tamanho</span><input name="size" defaultValue={editingItem?.size} /></label>
+                <label className="form-field stock-modal__wide"><span>Produto</span><input name="name" required defaultValue={editingItem?.name} /></label>
+                <label className="form-field"><span>Quantidade</span><input name="quantity" type="number" min="1" step="1" defaultValue={editingItem?.quantity ?? 1} required /></label>
+                <label className="form-field"><span>Custo unit. (€)</span><input name="unitCost" type="number" min="0" step="0.01" defaultValue={editingItem?.unitCost} required /></label>
+                <label className="form-field"><span>Tipo</span><select name="purchaseType" defaultValue={editingItem?.purchaseType ?? "PRIVATE"} required>
                   <option value="PRIVATE">Private</option>
                   <option value="MARGIN">Margin</option>
                   <option value="VAT0%">VAT0%</option>
@@ -420,8 +471,8 @@ export function IncomingStockPage() {
                   <button className="button button--small button--primary" type="button" onClick={createSupplier}>Guardar fornecedor</button>
                 </fieldset>}
                 <label className="form-field"><span>Data Encomenda</span><input name="orderedAt" type="date" value={orderedAt} onChange={(event) => setOrderedAt(event.target.value)} required /></label>
-                <label className="form-field"><span>Link Tracking</span><input name="trackingUrl" type="url" placeholder="https://..." /></label>
-                <label className="form-field stock-modal__wide"><span>Imagem URL</span><input name="imageUrl" type="url" placeholder="https://..." /></label>
+                <label className="form-field"><span>Link Tracking</span><input name="trackingUrl" type="url" placeholder="https://..." defaultValue={editingItem?.trackingUrl} /></label>
+                <label className="form-field stock-modal__wide"><span>Imagem URL</span><input name="imageUrl" type="url" placeholder="https://..." defaultValue={editingItem?.imageUrl} /></label>
               </div>
             </div>
             <footer className="sale-modal__footer">
