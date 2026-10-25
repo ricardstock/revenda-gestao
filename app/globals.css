@@ -839,18 +839,18 @@ button {
 
 .incoming-table {
   width: 100%;
-  min-width: 1080px;
+  min-width: 1180px;
   table-layout: fixed;
 }
 
-.incoming-table th:nth-child(1) { width: 10%; }
-.incoming-table th:nth-child(2) { width: 22%; }
-.incoming-table th:nth-child(3) { width: 7%; }
-.incoming-table th:nth-child(4) { width: 12%; }
-.incoming-table th:nth-child(5) { width: 10%; }
-.incoming-table th:nth-child(6) { width: 13%; }
-.incoming-table th:nth-child(7) { width: 10%; }
-.incoming-table th:nth-child(8) { width: 16%; }
+.incoming-table th:nth-child(1) { width: 9%; }
+.incoming-table th:nth-child(2) { width: 20%; }
+.incoming-table th:nth-child(3) { width: 6%; }
+.incoming-table th:nth-child(4) { width: 10%; }
+.incoming-table th:nth-child(5) { width: 9%; }
+.incoming-table th:nth-child(6) { width: 11%; }
+.incoming-table th:nth-child(7) { width: 9%; }
+.incoming-table th:nth-child(8) { width: 26%; }
 
 .incoming-table tbody td.incoming-product-cell {
   min-width: 230px;
@@ -859,6 +859,11 @@ button {
 .incoming-table tbody td.incoming-actions-cell {
   display: table-cell;
   white-space: nowrap;
+  text-align: center;
+}
+
+.incoming-table tbody td.incoming-actions-cell .button {
+  margin: 0 2px;
 }
 
 .incoming-tracking-link {

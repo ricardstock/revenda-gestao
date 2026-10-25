@@ -48,14 +48,21 @@ function supplierMetrics(supplierId: string, data: LocalData): ContactMetrics {
   const units = new Map(data.units.map((unit) => [unit.id, unit]));
   const margins: number[] = [];
   let profitComplete = true;
+  let saleLinkedValue = 0;
+  let saleLinkedCount = 0;
 
   data.sales.filter((sale) => sale.status === "COMPLETED").forEach((sale) => {
+    if (sale.supplierId && sale.supplierId !== supplierId) return;
+    const chosenOnSale = sale.supplierId === supplierId;
+    let countedInStock = false;
     sale.lines.forEach((line) => {
       const product = products.get(line.productId);
       if (line.unitIds.length) {
         line.unitIds.forEach((unitId) => {
           const unit = units.get(unitId);
-          if ((unit?.supplierId ?? product?.supplierId) === supplierId) {
+          const unitSupplier = unit?.supplierId ?? product?.supplierId;
+          if (chosenOnSale || unitSupplier === supplierId) {
+            if (unitSupplier === supplierId) countedInStock = true;
             const unitCost = unit?.acquisitionCost ?? line.unitCost;
             if (!Number.isFinite(line.unitPrice) || !Number.isFinite(unitCost) || (unitCost ?? -1) < 0) {
               profitComplete = false;
@@ -66,7 +73,8 @@ function supplierMetrics(supplierId: string, data: LocalData): ContactMetrics {
             }
           }
         });
-      } else if (product?.supplierId === supplierId) {
+      } else if (chosenOnSale || product?.supplierId === supplierId) {
+        if (product?.supplierId === supplierId) countedInStock = true;
         if (!Number.isFinite(line.unitPrice) || !Number.isFinite(line.unitCost) || (line.unitCost ?? -1) < 0) {
           profitComplete = false;
         } else {
@@ -79,8 +87,16 @@ function supplierMetrics(supplierId: string, data: LocalData): ContactMetrics {
         }
       }
     });
+    if (chosenOnSale && !countedInStock) {
+      saleLinkedCount += 1;
+      saleLinkedValue += sale.lines.reduce(
+        (total, line) => total + (line.unitCost ?? 0) * line.quantity,
+        0,
+      );
+    }
   });
 
+  const totalValue = sumMoney([value, saleLinkedValue]);
   const profit = profitComplete ? sumMoney(margins) : null;
   const lastPurchase = incoming
     .map((item) => item.orderedAt)
@@ -89,10 +105,10 @@ function supplierMetrics(supplierId: string, data: LocalData): ContactMetrics {
     .at(-1) ?? "";
 
   return {
-    purchases: purchases.length + incoming.length + batchIds.size,
-    value,
+    purchases: purchases.length + incoming.length + batchIds.size + saleLinkedCount,
+    value: totalValue,
     profit,
-    roi: calculateProfitRatio(profit, value),
+    roi: calculateProfitRatio(profit, totalValue),
     lastPurchase,
   };
 }
