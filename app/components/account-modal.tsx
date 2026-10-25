@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState, type FormEvent } from "react";
+import { createPortal } from "react-dom";
 import { createClient } from "../lib/supabase/client";
 
 export function AccountModal({ onClose }: { onClose: () => void }) {
@@ -58,7 +59,7 @@ export function AccountModal({ onClose }: { onClose: () => void }) {
     }
   }
 
-  return (
+  return createPortal(
     <div className="sale-modal-backdrop" onMouseDown={(event) => {
       if (event.target === event.currentTarget) onClose();
     }}>
@@ -86,6 +87,7 @@ export function AccountModal({ onClose }: { onClose: () => void }) {
           </footer>
         </form>
       </section>
-    </div>
+    </div>,
+    document.body,
   );
 }
