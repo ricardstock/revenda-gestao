@@ -1062,6 +1062,9 @@ button {
 .bulk-sizes__row .button--small {
   justify-self: stretch;
 }
+.bulk-sizes--sales .bulk-sizes__row {
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1fr) 38px;
+}
 
 .tax-sales-tabs {
   display: flex;

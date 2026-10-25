@@ -21,6 +21,7 @@ import {
 import { useLocalData } from "./local-data-provider";
 import { SaleFiltersBar, applySaleFilters, defaultSaleFilters, type SaleFilters } from "./sale-filters";
 import { BulkSaleBar } from "./bulk-sale-edit";
+import { BulkSaleModal } from "./bulk-sale-modal";
 import { FinancialValue, PaymentStatusBadge, PrivacyValue } from "./workspace-shell";
 import { CustomerAutocomplete } from "./customer-autocomplete";
 import { SaleDetailsModal } from "./sale-details-modal";
@@ -54,6 +55,7 @@ export function CompletedSalesPage() {
   const [filters, setFilters] = useState<SaleFilters>(defaultSaleFilters);
   const [selected, setSelected] = useState<string[]>([]);
   const [modalOpen, setModalOpen] = useState(false);
+  const [bulkOpen, setBulkOpen] = useState(false);
   const [editingSale, setEditingSale] = useState<Sale | null>(null);
   const [detailsSale, setDetailsSale] = useState<Sale | null>(null);
   const [today, setToday] = useState("");
@@ -322,6 +324,7 @@ export function CompletedSalesPage() {
           <p>Consulta as vendas finalizadas e os pagamentos registados.</p>
         </div>
         <div className="pending-sales__header-actions">
+          <button className="button" type="button" disabled={!ready || Boolean(error)} onClick={() => setBulkOpen(true)}>+ Venda bulk</button>
           <button className="button button--primary" type="button" disabled={!ready || Boolean(error)} onClick={openModal}>+ Nova venda</button>
         </div>
       </header>
@@ -402,6 +405,7 @@ export function CompletedSalesPage() {
       </section>
 
       {detailsSale && <SaleDetailsModal sale={detailsSale} data={data} onClose={() => setDetailsSale(null)} />}
+      {bulkOpen && <BulkSaleModal status="COMPLETED" onClose={() => setBulkOpen(false)} onSaved={(message) => { setBulkOpen(false); setNotice(message); setFormError(""); }} />}
 
       {modalOpen && <div className="sale-modal-backdrop" onMouseDown={(event) => {
         if (event.target === event.currentTarget) setModalOpen(false);

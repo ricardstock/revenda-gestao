@@ -22,6 +22,7 @@ import {
 import { useLocalData } from "./local-data-provider";
 import { SaleFiltersBar, applySaleFilters, defaultSaleFilters, type SaleFilters } from "./sale-filters";
 import { BulkSaleBar } from "./bulk-sale-edit";
+import { BulkSaleModal } from "./bulk-sale-modal";
 import { FinancialValue, PaymentStatusBadge, PrivacyValue } from "./workspace-shell";
 import { CustomerAutocomplete } from "./customer-autocomplete";
 import { SaleDetailsModal } from "./sale-details-modal";
@@ -57,6 +58,7 @@ export function PendingSalesPage() {
   const { data, ready, error, update } = useLocalData();
   const [today, setToday] = useState("");
   const [modalOpen, setModalOpen] = useState(false);
+  const [bulkOpen, setBulkOpen] = useState(false);
   const [editingSale, setEditingSale] = useState<Sale | null>(null);
   const [detailsSale, setDetailsSale] = useState<Sale | null>(null);
   const [paymentMode, setPaymentMode] = useState<PaymentMode>("PENDING");
@@ -385,6 +387,7 @@ export function PendingSalesPage() {
           <p>Regista vendas por concluir sem reservar nem alterar o stock.</p>
         </div>
         <div className="pending-sales__header-actions">
+          <button className="button" type="button" disabled={!ready || Boolean(error)} onClick={() => setBulkOpen(true)}>+ Venda bulk</button>
           <button className="button button--primary" type="button" disabled={!ready || Boolean(error)} onClick={() => {
             setFormError("");
             setEditingSale(null);
@@ -492,6 +495,7 @@ export function PendingSalesPage() {
       </section>
 
       {detailsSale && <SaleDetailsModal sale={detailsSale} data={data} onClose={() => setDetailsSale(null)} />}
+      {bulkOpen && <BulkSaleModal status="PENDING" onClose={() => setBulkOpen(false)} onSaved={(message) => { setBulkOpen(false); setNotice(message); setFormError(""); }} />}
 
       {modalOpen && <div className="sale-modal-backdrop" onMouseDown={(event) => {
         if (event.target === event.currentTarget) setModalOpen(false);
