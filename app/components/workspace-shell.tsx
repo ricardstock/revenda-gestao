@@ -23,6 +23,7 @@ const visiblePages = [
   { label: "Estatísticas trimestrais", href: "/estatisticas-trimestrais", icon: "dashboard" as const },
   { label: "Stock", href: "/stock", icon: "stock" as const },
   { label: "Vendas concluídas", href: "/vendas", icon: "sales" as const },
+  { label: "Vendas VAT e Margin", href: "/vendas-iva-margem", icon: "sales" as const },
   { label: "Vendas pendentes", href: "/encomendas-pendentes", icon: "sales" as const },
   { label: "Produtos a caminho", href: "/produtos-a-caminho", icon: "purchases" as const },
   { label: "Fornecedores", href: "/fornecedores", icon: "suppliers" as const },
@@ -554,7 +555,7 @@ export function WorkspaceShell({ children }: { children: React.ReactNode }) {
             </form>
           </div>
         </header>
-        <main className={`main-content${pathname === "/vendas" || pathname === "/encomendas-pendentes" ? " main-content--sales" : ""}`}>{children}</main>
+        <main className={`main-content${pathname === "/vendas" || pathname === "/vendas-iva-margem" || pathname === "/encomendas-pendentes" ? " main-content--sales" : ""}`}>{children}</main>
         <footer className="workspace-footer">
           <span>Revenda Gestão</span>
           <span>
