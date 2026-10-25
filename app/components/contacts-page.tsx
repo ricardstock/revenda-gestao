@@ -278,13 +278,9 @@ export function ContactsPage({ kind }: { kind: DirectoryKind }) {
   }
 
   function deleteContact(contact: DirectoryContact) {
-    if (!window.confirm(`Eliminar permanentemente “${contact.name}”? Esta ação não pode ser anulada.`)) return;
+    if (!window.confirm(`Eliminar permanentemente “${contact.name}”? As vendas associadas são mantidas. Esta ação não pode ser anulada.`)) return;
     try {
       update((current) => {
-        const withoutDirectories = JSON.stringify({ ...current, suppliers: [], customers: [] });
-        if (withoutDirectories.includes(`"${contact.id}"`)) {
-          throw new Error(`“${contact.name}” tem vendas, compras ou stock associados e não pode ser eliminado de vez. Mantém-no como removido para preservar o histórico.`);
-        }
         return isSupplier
           ? { ...current, suppliers: current.suppliers.filter((item) => item.id !== contact.id) }
           : { ...current, customers: current.customers.filter((item) => item.id !== contact.id) };
