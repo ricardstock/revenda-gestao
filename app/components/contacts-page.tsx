@@ -295,10 +295,12 @@ export function ContactsPage({ kind }: { kind: DirectoryKind }) {
       {notice && <p className="feedback feedback--success" role="status">{notice}</p>}
       {formError && !modalOpen && <p className="feedback feedback--error" role="alert">{formError}</p>}
       <section className="content-panel contacts-panel">
-        <label className="stock-archived-toggle">
-          <input type="checkbox" checked={showArchived} onChange={(event) => setShowArchived(event.target.checked)} />
-          Mostrar removidos
-        </label>
+        <div className="contacts-panel__toolbar">
+          <label className="stock-archived-toggle">
+            <input type="checkbox" checked={showArchived} onChange={(event) => setShowArchived(event.target.checked)} />
+            Mostrar removidos
+          </label>
+        </div>
         <div className="table-wrap contacts-table-wrap">
           <table className="data-table contacts-table">
             <thead>
