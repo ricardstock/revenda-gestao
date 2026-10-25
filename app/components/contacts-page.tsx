@@ -261,6 +261,26 @@ export function ContactsPage({ kind }: { kind: DirectoryKind }) {
     }
   }
 
+  function deleteContact(contact: DirectoryContact) {
+    if (!window.confirm(`Eliminar permanentemente “${contact.name}”? Esta ação não pode ser anulada.`)) return;
+    try {
+      update((current) => {
+        const withoutDirectories = JSON.stringify({ ...current, suppliers: [], customers: [] });
+        if (withoutDirectories.includes(`"${contact.id}"`)) {
+          throw new Error(`“${contact.name}” tem vendas, compras ou stock associados e não pode ser eliminado de vez. Mantém-no como removido para preservar o histórico.`);
+        }
+        return isSupplier
+          ? { ...current, suppliers: current.suppliers.filter((item) => item.id !== contact.id) }
+          : { ...current, customers: current.customers.filter((item) => item.id !== contact.id) };
+      });
+      setNotice(`“${contact.name}” foi eliminado permanentemente.`);
+      setFormError("");
+    } catch (cause) {
+      setNotice("");
+      setFormError(cause instanceof Error ? cause.message : "Não foi possível eliminar o registo.");
+    }
+  }
+
   const editingContact = contacts.find((contact) => contact.id === editingId);
 
   return (
@@ -337,7 +357,10 @@ export function ContactsPage({ kind }: { kind: DirectoryKind }) {
                       </>}
                     <td className="contacts-actions-cell" data-label="Ações">
                       {contact.active === false
-                        ? <button className="button button--small" type="button" onClick={() => restoreContact(contact)}>Restaurar</button>
+                        ? <>
+                          <button className="button button--small" type="button" onClick={() => restoreContact(contact)}>Restaurar</button>
+                          <button className="button button--small button--danger" type="button" onClick={() => deleteContact(contact)}>Eliminar</button>
+                        </>
                         : <>
                           <button className="button button--small" type="button" onClick={() => {
                             setEditingId(contact.id);
