@@ -1086,6 +1086,15 @@ button {
   background: var(--accent-soft);
   color: var(--accent);
 }
+.tax-sales-filters {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 12px;
+}
+.tax-sales-filters .form-field {
+  min-width: 150px;
+}
 .tax-sales-summary {
   grid-template-columns: repeat(5, minmax(0, 1fr));
 }
