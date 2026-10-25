@@ -3990,6 +3990,32 @@ button {
   font-size: 13px;
 }
 
+.image-field__row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.image-field__row input[type="url"] {
+  flex: 1;
+  min-width: 0;
+}
+.image-field__row .button {
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+.image-field__preview {
+  border-radius: 6px;
+  object-fit: cover;
+}
+.image-field__attached {
+  flex: 1;
+  color: var(--muted-strong);
+  font-size: 12px;
+}
+.image-field__error {
+  color: var(--danger);
+}
+
 .login-form__error {
   margin: 0;
   color: var(--danger);

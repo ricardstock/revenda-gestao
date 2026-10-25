@@ -15,6 +15,7 @@ import {
   type SaleLine,
 } from "../lib/local-data";
 import { useLocalData } from "./local-data-provider";
+import { ImageUrlField } from "./image-url-field";
 import { PrivacyValue } from "./workspace-shell";
 import { CustomerAutocomplete } from "./customer-autocomplete";
 import { BulkStockModal } from "./bulk-stock-modal";
@@ -680,7 +681,7 @@ export function StockPage() {
                 <label className="form-field"><span>SKU</span><input name="sku" required autoFocus defaultValue={editingProduct?.sku} /></label>
                 <label className="form-field"><span>Tamanho</span><input name="size" defaultValue={editingProduct?.size} /></label>
                 <label className="form-field stock-modal__wide"><span>Nome do produto</span><input name="name" required defaultValue={editingProduct?.name} /></label>
-                <label className="form-field stock-modal__wide"><span>URL da imagem</span><input name="imageUrl" type="url" placeholder="https://..." defaultValue={editingProduct?.imageUrl} /></label>
+                <ImageUrlField defaultValue={editingProduct?.imageUrl} />
                 <label className="form-field"><span>Quantidade em stock</span><input name="quantity" type="number" min={editingProduct ? "0" : "1"} step="1" defaultValue={editingProduct ? existingUnits.length : "1"} required /></label>
                 <label className="form-field"><span>{editingProduct ? "Custo para unidades novas (€)" : "Custo por unidade (€)"}</span><input name="cost" type="number" min="0" step="0.01" defaultValue={editingProduct ? roundMoney(averageCost) : undefined} required /></label>
                 <label className="form-field"><span>Tipo de compra</span><select name="purchaseType" defaultValue={editingProduct?.purchaseType ?? "PRIVATE"} required>

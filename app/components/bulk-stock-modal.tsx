@@ -3,6 +3,7 @@
 import { useState, type FormEvent } from "react";
 import { makeId, roundMoney, type Product } from "../lib/local-data";
 import { useLocalData } from "./local-data-provider";
+import { ImageUrlField } from "./image-url-field";
 
 type PurchaseType = NonNullable<Product["purchaseType"]>;
 type SizeRow = { key: string; size: string; quantity: string; cost: string };
@@ -122,7 +123,7 @@ export function BulkStockModal({ onClose, onSaved }: { onClose: () => void; onSa
                 <option value="VAT0%">VAT0%</option><option value="PRIVATE">Private</option><option value="MARGIN">Margin</option>
               </select></label>
               <label className="form-field stock-modal__wide"><span>Nome do produto</span><input name="name" required /></label>
-              <label className="form-field stock-modal__wide"><span>URL da imagem</span><input name="imageUrl" type="url" placeholder="https://..." /></label>
+              <ImageUrlField />
               <label className="form-field stock-modal__wide"><span>Fornecedor</span>
                 <select name="supplierId" defaultValue="">
                   <option value="">— Sem fornecedor —</option>
