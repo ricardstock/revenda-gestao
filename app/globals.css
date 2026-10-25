@@ -1095,6 +1095,23 @@ button {
 .tax-sales-filters .form-field {
   min-width: 150px;
 }
+.content-panel > .tax-sales-filters {
+  padding: 16px 22px 18px;
+  margin-top: 14px;
+  border-top: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+  background: var(--surface-muted);
+}
+.content-panel > .tax-sales-filters .form-field {
+  gap: 6px;
+  flex: 1 1 150px;
+  max-width: 220px;
+}
+.content-panel > .tax-sales-filters .form-field > span {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--muted);
+}
 .tax-sales-summary {
   grid-template-columns: repeat(5, minmax(0, 1fr));
 }
