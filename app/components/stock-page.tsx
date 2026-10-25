@@ -232,9 +232,15 @@ export function StockPage() {
             })),
           ],
         };
-        return saleStatus === "COMPLETED"
-          ? completePendingSale(next, saleId)
+        const soldOut = !next.units.some(
+          (unit) => unit.productId === product.id && unit.status === "READY_TO_SHIP",
+        );
+        const withStock = soldOut
+          ? { ...next, products: next.products.map((item) => item.id === product.id ? { ...item, active: false } : item) }
           : next;
+        return saleStatus === "COMPLETED"
+          ? completePendingSale(withStock, saleId)
+          : withStock;
       });
       setSellingProductId(null);
       setFormError("");
