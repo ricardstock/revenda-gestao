@@ -576,6 +576,36 @@ export function completePendingSale(data: LocalData, saleId: string) {
   };
 }
 
+export function allocateStockToSales(data: LocalData, newSales: Sale[], occurredAt: string) {
+  let units = data.units;
+  const movements: LocalData["movements"] = [];
+  const sales = newSales.map((sale) => ({
+    ...sale,
+    lines: sale.lines.map((line) => {
+      if (!line.productId || line.unitIds.length) return line;
+      const taken = units
+        .filter((unit) => unit.productId === line.productId && unit.status === "READY_TO_SHIP")
+        .sort((a, b) => a.acquiredAt.localeCompare(b.acquiredAt))
+        .slice(0, line.quantity);
+      if (!taken.length) return line;
+      const takenIds = new Set(taken.map((unit) => unit.id));
+      units = units.map((unit) => takenIds.has(unit.id) ? { ...unit, status: "SOLD" as const } : unit);
+      taken.forEach((unit) => movements.push({
+        id: makeId(),
+        unitId: unit.id,
+        type: "SALE_COMPLETED" as const,
+        quantityDelta: -1 as const,
+        fromLocationId: unit.locationId,
+        toLocationId: "",
+        occurredAt,
+        notes: sale.status === "COMPLETED" ? "Venda concluída" : "Venda pendente registada",
+      }));
+      return { ...line, unitIds: taken.map((unit) => unit.id) };
+    }),
+  }));
+  return { sales, units, movements: [...data.movements, ...movements] };
+}
+
 export function deleteSaleAndRelatedData(data: LocalData, saleId: string) {
   if (!data.sales.some((sale) => sale.id === saleId)) {
     throw new Error("Esta venda já não existe.");

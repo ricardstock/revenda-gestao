@@ -7,6 +7,7 @@ import {
   findOrCreateSupplier,
   localDateString,
   makeId,
+  allocateStockToSales,
   deleteSaleAndRelatedData,
   duplicateSaleWithPayments,
   paymentStatus,
@@ -242,11 +243,16 @@ export function CompletedSalesPage() {
             reference: "",
           }]
           : [];
+        const allocation = editingSale
+          ? null
+          : allocateStockToSales(current, sales, new Date().toISOString());
         return {
           ...current,
           customers: customerResult.customers,
           suppliers: supplierResult.suppliers,
-          sales: editingSale ? sales : [...sales, ...current.sales],
+          sales: allocation ? [...allocation.sales, ...current.sales] : sales,
+          units: allocation?.units ?? current.units,
+          movements: allocation?.movements ?? current.movements,
           payments: [...editPayment, ...payments, ...current.payments],
         };
       });
