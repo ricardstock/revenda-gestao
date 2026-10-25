@@ -45,12 +45,29 @@ export function TaxSalesPage() {
   const [query, setQuery] = useState("");
   const [detailsSale, setDetailsSale] = useState<Sale | null>(null);
 
-  const taxSales = useMemo(
-    () => data.sales
+  const [from, setFrom] = useState("");
+  const [to, setTo] = useState("");
+  const [declared, setDeclared] = useState("ALL");
+  const [sort, setSort] = useState("date-desc");
+
+  const taxSales = useMemo(() => {
+    const value = (sale: Sale, key: string) => {
+      const metrics = calculateSaleFinancialMetrics(sale, data);
+      if (key === "revenue") return metrics.revenue ?? 0;
+      if (key === "profit") return metrics.grossProfit ?? 0;
+      return 0;
+    };
+    const [key, direction] = sort.split("-");
+    const factor = direction === "asc" ? 1 : -1;
+    return data.sales
       .filter((sale) => sale.status === "COMPLETED" && isTaxType(sale.saleType))
-      .sort((a, b) => b.soldAt.localeCompare(a.soldAt)),
-    [data.sales],
-  );
+      .filter((sale) => !from || sale.soldAt.slice(0, 10) >= from)
+      .filter((sale) => !to || sale.soldAt.slice(0, 10) <= to)
+      .filter((sale) => declared === "ALL" || sale.declared === declared)
+      .sort((a, b) => factor * (key === "date"
+        ? a.soldAt.localeCompare(b.soldAt)
+        : value(a, key) - value(b, key)));
+  }, [data, from, to, declared, sort]);
 
   const summaries = useMemo(() => {
     const build = (sales: Sale[]) => {
@@ -111,6 +128,35 @@ export function TaxSalesPage() {
           </button>
         ))}
       </div>
+
+      <section className="tax-sales-filters" aria-label="Filtros">
+        <label className="form-field"><span>De</span>
+          <input type="date" value={from} onChange={(event) => setFrom(event.target.value)} /></label>
+        <label className="form-field"><span>Até</span>
+          <input type="date" value={to} onChange={(event) => setTo(event.target.value)} /></label>
+        <label className="form-field"><span>Declarado</span>
+          <select value={declared} onChange={(event) => setDeclared(event.target.value)}>
+            <option value="ALL">Todos</option>
+            <option value="YES">Sim</option>
+            <option value="NO">Não</option>
+            <option value="PRIVATE">Private</option>
+          </select></label>
+        <label className="form-field"><span>Ordenar por</span>
+          <select value={sort} onChange={(event) => setSort(event.target.value)}>
+            <option value="date-desc">Data (mais recente)</option>
+            <option value="date-asc">Data (mais antiga)</option>
+            <option value="revenue-desc">Venda (maior)</option>
+            <option value="revenue-asc">Venda (menor)</option>
+            <option value="profit-desc">Lucro (maior)</option>
+            <option value="profit-asc">Lucro (menor)</option>
+          </select></label>
+        {(from || to || declared !== "ALL" || sort !== "date-desc") && (
+          <button className="button button--small" type="button"
+            onClick={() => { setFrom(""); setTo(""); setDeclared("ALL"); setSort("date-desc"); }}>
+            Limpar filtros
+          </button>
+        )}
+      </section>
 
       <section className="stock-summary tax-sales-summary" aria-label="Estatísticas">
         <div><span>Vendas</span><strong>{ready ? current.count : "…"}</strong></div>
