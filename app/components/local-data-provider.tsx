@@ -30,8 +30,10 @@ type LocalDataContextValue = {
 
 const LocalDataContext = createContext<LocalDataContextValue | null>(null);
 
-type LocalDataInput = Omit<LocalData, "incomingProducts"> & {
+type LocalDataInput = Omit<LocalData, "incomingProducts" | "supplierCategories" | "supplierSites"> & {
   incomingProducts?: LocalData["incomingProducts"];
+  supplierCategories?: LocalData["supplierCategories"];
+  supplierSites?: LocalData["supplierSites"];
 };
 
 function isLocalData(value: unknown): value is LocalDataInput {
@@ -40,6 +42,8 @@ function isLocalData(value: unknown): value is LocalDataInput {
   return (
     record.version === 1 &&
     (record.incomingProducts === undefined || Array.isArray(record.incomingProducts)) &&
+    (record.supplierCategories === undefined || Array.isArray(record.supplierCategories)) &&
+    (record.supplierSites === undefined || Array.isArray(record.supplierSites)) &&
     [
       "products",
       "customers",
@@ -61,7 +65,12 @@ function parseLocalData(value: unknown): LocalData {
   if (!isLocalData(value)) {
     throw new Error("O formato dos dados locais não é reconhecido.");
   }
-  return { ...value, incomingProducts: value.incomingProducts ?? [] };
+  return {
+    ...value,
+    incomingProducts: value.incomingProducts ?? [],
+    supplierCategories: value.supplierCategories ?? [],
+    supplierSites: value.supplierSites ?? [],
+  };
 }
 
 export function LocalDataProvider({

@@ -28,6 +28,7 @@ const visiblePages = [
   { label: "Vendas pendentes", href: "/encomendas-pendentes", icon: "sales" as const },
   { label: "Produtos a caminho", href: "/produtos-a-caminho", icon: "purchases" as const },
   { label: "Fornecedores", href: "/fornecedores", icon: "suppliers" as const },
+  { label: "Fornecedores por categoria", href: "/fornecedores-categorias", icon: "folder" as const },
   { label: "Clientes", href: "/clientes", icon: "customers" as const },
   { label: "Despesas", href: "/despesas", icon: "expenses" as const },
 ];
@@ -164,6 +165,23 @@ export function WorkspaceShell({ children }: { children: React.ReactNode }) {
           supplier.notes,
         ].join(" "),
       })),
+      ...data.supplierCategories.map((category) => ({
+        id: `supplier-category-${category.id}`,
+        label: category.name,
+        detail: "Categoria de fornecedores",
+        href: "/fornecedores-categorias",
+        searchText: category.name,
+      })),
+      ...data.supplierSites.map((site) => {
+        const category = data.supplierCategories.find((item) => item.id === site.categoryId);
+        return {
+          id: `supplier-site-${site.id}`,
+          label: site.name,
+          detail: `Site fornecedor · ${category?.name ?? "Sem categoria"}`,
+          href: `/fornecedores-categorias/${site.categoryId}`,
+          searchText: [site.name, site.website, site.minimumOrderQuantity, site.minimumOrderValue, site.notes, category?.name].join(" "),
+        };
+      }),
       ...data.customers.map((customer) => ({
         id: `customer-${customer.id}`,
         label: customer.name,
@@ -457,7 +475,9 @@ export function WorkspaceShell({ children }: { children: React.ReactNode }) {
             <Icon name={mobileOpen ? "close" : "menu"} />
           </button>
           <div className="topbar__section-title">
-            {pathname === "/stock"
+            {pathname.startsWith("/fornecedores-categorias")
+              ? "Fornecedores por categoria"
+              : pathname === "/stock"
               ? "Stock"
               : pathname === "/estatisticas-mensais"
                 ? "Estatísticas mensais"

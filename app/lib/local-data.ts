@@ -51,6 +51,23 @@ export type Supplier = Contact & {
   active?: boolean;
 };
 
+export type SupplierCategoryFolder = {
+  id: string;
+  name: string;
+};
+
+export type SupplierCatalogSite = {
+  id: string;
+  categoryId: string;
+  name: string;
+  website: string;
+  loginUsername: string;
+  passwordManagerReference: string;
+  minimumOrderQuantity?: number;
+  minimumOrderValue?: number;
+  notes: string;
+};
+
 export type Customer = Contact & {
   active?: boolean;
 };
@@ -178,6 +195,8 @@ export type LocalData = {
   incomingProducts: IncomingStockItem[];
   customers: Customer[];
   suppliers: Supplier[];
+  supplierCategories: SupplierCategoryFolder[];
+  supplierSites: SupplierCatalogSite[];
   locations: Location[];
   sales: Sale[];
   purchases: Purchase[];
@@ -195,6 +214,8 @@ export const emptyLocalData: LocalData = {
   incomingProducts: [],
   customers: [],
   suppliers: [],
+  supplierCategories: [],
+  supplierSites: [],
   locations: [],
   sales: [],
   purchases: [],
