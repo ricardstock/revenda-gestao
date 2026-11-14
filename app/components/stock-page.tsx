@@ -165,6 +165,7 @@ export function StockPage() {
         size: sellingProduct.size,
         productName: sellingProduct.name,
         unitCost: roundMoney(costValue),
+        unitCostOverride: false,
       };
       const sale: Sale = {
         id: saleId,

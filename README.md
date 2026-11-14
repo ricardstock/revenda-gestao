@@ -29,7 +29,12 @@ compra), margem bruta (lucro bruto sobre o valor vendido) e rentabilidade sobre
 o custo de compra. Percentagens sem denominador positivo são apresentadas como
 indisponíveis; se faltar preço ou custo, o lucro correspondente também não é
 inventado. Uma unidade devolvida e aprovada para revenda deixa de contar como
-custo vendido.
+custo vendido. Ao editar explicitamente o custo de uma venda, o novo custo
+unitário é usado nos seus indicadores, sem alterar o custo das unidades em stock.
+Para vendas antigas sem indicação explícita de custo editado, um custo unitário
+diferente do custo médio das unidades associadas é tratado como uma edição.
+Se o custo das unidades tiver sido alterado posteriormente, esta inferência
+pode também considerar a diferença como uma edição da venda.
 
 O lucro líquido e o IVA são estimativas baseadas nas regras fiscais atualmente
 codificadas por tipo de venda, não um apuramento contabilístico. As despesas

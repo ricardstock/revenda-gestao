@@ -31,6 +31,7 @@ const {
   saleOutstanding,
   duplicateProductWithStock,
   duplicateSaleWithPayments,
+  shouldOverrideSaleLineCost,
 } = localDataModule;
 
 function makeSale(id, saleType = "PRIVATE", unitPrice = 125, unitCost = 95) {
@@ -275,6 +276,79 @@ test("retorno aprovado para revenda preserva o custo em stock e contabiliza o re
   assert.equal(metrics.cost, 0);
   assert.equal(metrics.refunds, 100);
   assert.equal(metrics.netProfitEstimate, 0);
+});
+
+test("custo editado da venda prevalece sobre o custo das unidades sem alterar o stock", () => {
+  for (const status of ["PENDING", "COMPLETED"]) {
+    const sale = makeSale(`edited-${status}`, "MARGIN", 125, 95);
+    sale.status = status;
+    sale.lines[0].unitIds = ["unit"];
+    sale.lines[0].unitCostOverride = false;
+    const unit = { id: "unit", acquisitionCost: 80 };
+    const data = { ...emptyLocalData, sales: [sale], units: [unit] };
+
+    assert.equal(calculateSaleFinancialMetrics(sale, data).cost, 80);
+
+    const edited = {
+      ...sale,
+      lines: [{ ...sale.lines[0], unitCost: 100, unitCostOverride: true }],
+    };
+    const saved = JSON.parse(JSON.stringify(edited));
+    const metrics = calculateSaleFinancialMetrics(saved, data);
+    assert.equal(metrics.cost, 100);
+    assert.equal(metrics.revenue, 125);
+    assert.equal(metrics.grossProfit, 25);
+    assert.equal(metrics.vatEstimate, 4.67);
+    assert.equal(metrics.netProfitEstimate, 20.33);
+    assert.equal(unit.acquisitionCost, 80);
+
+    const zeroCost = { ...edited, lines: [{ ...edited.lines[0], unitCost: 0 }] };
+    assert.equal(calculateSaleFinancialMetrics(zeroCost, data).cost, 0);
+    const missingCost = { ...edited, lines: [{ ...edited.lines[0], unitCost: undefined }] };
+    assert.equal(calculateSaleFinancialMetrics(missingCost, data).cost, null);
+  }
+});
+
+test("custo editado não inclui unidades devolvidas para revenda", () => {
+  const sale = makeSale("edited-return", "PRIVATE", 100, 25);
+  sale.lines[0] = {
+    ...sale.lines[0],
+    quantity: 2,
+    unitIds: ["sold", "returned"],
+    unitCostOverride: true,
+  };
+  const data = {
+    ...emptyLocalData,
+    units: [{ id: "sold", acquisitionCost: 60 }, { id: "returned", acquisitionCost: 70 }],
+    returns: [{ saleId: sale.id, unitId: "returned", status: "APPROVED_FOR_RESALE" }],
+  };
+  assert.equal(calculateSaleFinancialMetrics(sale, data).cost, 25);
+});
+
+test("venda antiga do stock apresenta custo já editado sem precisar de guardar novamente", () => {
+  const sale = makeSale("legacy", "PRIVATE", 70, 4);
+  sale.status = "PENDING";
+  sale.lines[0].unitIds = ["unit"];
+  const units = [{ id: "unit", acquisitionCost: 80.95 }];
+  const line = sale.lines[0];
+  assert.equal(shouldOverrideSaleLineCost(line, units, false), true);
+  const legacyMetrics = calculateSaleFinancialMetrics(sale, { ...emptyLocalData, units });
+  assert.equal(legacyMetrics.cost, 4);
+  assert.equal(legacyMetrics.grossProfit, 66);
+  const saved = { ...sale, lines: [{ ...line, unitCostOverride: shouldOverrideSaleLineCost(line, units, false) }] };
+  assert.equal(calculateSaleFinancialMetrics(saved, { ...emptyLocalData, units }).cost, 4);
+  assert.equal(calculateSaleFinancialMetrics(saved, { ...emptyLocalData, units }).grossProfit, 66);
+  assert.equal(units[0].acquisitionCost, 80.95);
+
+  const multiple = { ...line, quantity: 2, unitIds: ["a", "b"], unitCost: 80.95 };
+  const multipleUnits = [{ id: "a", acquisitionCost: 80.90 }, { id: "b", acquisitionCost: 81 }];
+  assert.equal(shouldOverrideSaleLineCost(multiple, multipleUnits, false), false);
+  assert.equal(shouldOverrideSaleLineCost(multiple, multipleUnits, true), true);
+  assert.equal(shouldOverrideSaleLineCost(line, [], false), false);
+  assert.equal(shouldOverrideSaleLineCost({ ...line, unitCostOverride: false }, units, false), false);
+  assert.equal(shouldOverrideSaleLineCost({ ...line, unitCostOverride: false }, units, true), true);
+  const explicitStockCost = { ...sale, lines: [{ ...line, unitCostOverride: false }] };
+  assert.equal(calculateSaleFinancialMetrics(explicitStockCost, { ...emptyLocalData, units }).cost, 80.95);
 });
 
 test("operational totals include completed sales only, not pending or cancelled sales", () => {

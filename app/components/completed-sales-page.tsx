@@ -14,6 +14,7 @@ import {
   saleOutstanding,
   calculateSaleFinancialMetrics,
   roundMoney,
+  shouldOverrideSaleLineCost,
   saleTotal,
   type Sale,
   type SaleLine,
@@ -57,6 +58,7 @@ export function CompletedSalesPage() {
   const [modalOpen, setModalOpen] = useState(false);
   const [bulkOpen, setBulkOpen] = useState(false);
   const [editingSale, setEditingSale] = useState<Sale | null>(null);
+  const [costEdited, setCostEdited] = useState(false);
   const [detailsSale, setDetailsSale] = useState<Sale | null>(null);
   const [today, setToday] = useState("");
   const [buyerName, setBuyerName] = useState("");
@@ -95,6 +97,7 @@ export function CompletedSalesPage() {
     setPaymentMode("PENDING");
     setSaleType("PRIVATE");
     setEditingSale(null);
+    setCostEdited(false);
     setFormError("");
     setModalOpen(true);
   }
@@ -160,6 +163,7 @@ export function CompletedSalesPage() {
         size,
         productName,
         unitCost: roundMoney(cost),
+        unitCostOverride: editingSale ? shouldOverrideSaleLineCost(editingSale.lines[0], data.units, costEdited) : undefined,
       };
       const sale: Sale = {
         id,
@@ -269,6 +273,7 @@ export function CompletedSalesPage() {
 
   function editSale(sale: Sale) {
     setEditingSale(sale);
+    setCostEdited(false);
     setBuyerName(sale.buyerName ?? "");
     setCustomerId(sale.customerId);
     setDeclaredValue(sale.declared === "YES" ? "YES" : "NO");
@@ -437,7 +442,7 @@ export function CompletedSalesPage() {
                 <label className="form-field"><span>SKU</span><input name="sku" required maxLength={80} defaultValue={editingSale?.lines[0]?.sku} /></label>
                 <label className="form-field"><span>Tamanho</span><input name="size" maxLength={40} defaultValue={editingSale?.lines[0]?.size} /></label>
                 <label className="form-field pending-sale-product-field"><span>Produto</span><input name="productName" required maxLength={160} defaultValue={editingSale?.lines[0]?.productName} /></label>
-                <label className="form-field"><span>Custo</span><input name="cost" type="number" min="0" step="0.01" defaultValue={editingSale?.lines[0]?.unitCost ?? 0} required /></label>
+                <label className="form-field"><span>Custo</span><input name="cost" type="number" min="0" step="0.01" defaultValue={editingSale?.lines[0]?.unitCost ?? 0} onChange={() => setCostEdited(true)} required /></label>
                 <label className="form-field"><span>Venda</span><input name="salePrice" type="number" min="0.01" step="0.01" defaultValue={editingSale?.lines[0]?.unitPrice} required /></label>
                 <label className="form-field"><span>Custo Envio</span><input name="shippingCost" type="number" min="0" step="0.01" defaultValue={editingSale?.shippingCost ?? 0} required /></label>
                 <label className="form-field"><span>Tipo</span><select name="saleType" value={saleType} onChange={(event) => {

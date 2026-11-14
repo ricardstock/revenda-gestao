@@ -80,6 +80,7 @@ export function BulkSaleBar({ selectedIds, onClear, onNotice }: Props) {
               productName: form.productName.trim() || line.productName,
               unitPrice: price === undefined ? line.unitPrice : roundMoney(price),
               unitCost: cost === undefined ? line.unitCost : roundMoney(cost),
+              unitCostOverride: cost === undefined ? line.unitCostOverride : true,
             }),
           };
         });

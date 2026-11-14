@@ -82,6 +82,7 @@ export type SaleLine = {
   size?: string;
   productName?: string;
   unitCost?: number;
+  unitCostOverride?: boolean;
 };
 
 export type Sale = {
@@ -366,6 +367,21 @@ export function saleTotal(sale: Sale) {
   );
 }
 
+export function shouldOverrideSaleLineCost(
+  line: SaleLine | undefined,
+  units: LocalData["units"],
+  costChanged: boolean,
+) {
+  if (!line) return false;
+  if (costChanged) return true;
+  if (line.unitCostOverride !== undefined) return line.unitCostOverride;
+  if (!line.unitIds.length || !Number.isFinite(line.unitCost)) return false;
+  const costs = line.unitIds.map((id) => units.find((unit) => unit.id === id)?.acquisitionCost);
+  if (costs.some((cost) => cost === undefined || !Number.isFinite(cost) || cost < 0)) return false;
+  const total = costs.reduce<number>((sum, cost) => sum + (cost ?? 0), 0);
+  return roundMoney(total / costs.length) !== roundMoney(line.unitCost ?? 0);
+}
+
 export function saleCost(sale: Sale, data: LocalData) {
   const resalableReturnUnitIds = new Set(
     data.returns
@@ -379,15 +395,16 @@ export function saleCost(sale: Sale, data: LocalData) {
   return fromCents(
     sale.lines.reduce((total, line) => {
       if (line.unitIds.length) {
+        const overrideCost = shouldOverrideSaleLineCost(line, data.units, false);
         const unitCost = line.unitIds
           .filter((unitId) => !resalableReturnUnitIds.has(unitId))
           .reduce(
             (lineTotal, unitId) =>
               lineTotal +
               toCents(
-                data.units.find((unit) => unit.id === unitId)?.acquisitionCost ??
-                  line.unitCost ??
-                  0,
+                (overrideCost
+                  ? line.unitCost
+                  : data.units.find((unit) => unit.id === unitId)?.acquisitionCost ?? line.unitCost) ?? 0,
               ),
             0,
           );
@@ -422,10 +439,11 @@ function hasCompleteSaleCost(sale: Sale, data: LocalData) {
     if (!line.unitIds.length) {
       return Number.isFinite(line.unitCost) && (line.unitCost ?? -1) >= 0;
     }
+    const overrideCost = shouldOverrideSaleLineCost(line, data.units, false);
     return line.unitIds.every((unitId) => {
       if (resalableReturnUnitIds.has(unitId)) return true;
       const unit = data.units.find((item) => item.id === unitId);
-      const cost = unit?.acquisitionCost ?? line.unitCost;
+      const cost = overrideCost ? line.unitCost : unit?.acquisitionCost ?? line.unitCost;
       return Number.isFinite(cost) && (cost ?? -1) >= 0;
     });
   });
