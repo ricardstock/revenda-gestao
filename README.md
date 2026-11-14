@@ -19,7 +19,13 @@ partilham alterações, mas não há contas, sincronização com servidor,
 isolamento entre utilizadores ou cópias de segurança automáticas. A secção
 Definições permite exportar uma cópia JSON e limpar o armazenamento local.
 
-As vendas só descontam stock ao serem concluídas e exigem unidades disponíveis.
+As vendas feitas a partir do stock descontam as unidades imediatamente, mesmo
+quando ficam pendentes. Cada unidade vendida origina uma venda independente,
+com o seu custo e preço unitários. Um pagamento parcial total é dividido por
+igual entre as vendas, atribuindo os cêntimos restantes às primeiras.
+Na edição do produto, o custo de cada unidade disponível pode ser alterado
+individualmente; o custo indicado para unidades novas aplica-se apenas às
+unidades adicionadas. Unidades já vendidas não são alteradas.
 Pagamentos acumulados não podem exceder o total da venda; reembolsos acumulados
 não podem exceder pagamentos ainda não reembolsados. Receções parciais criam
 apenas as unidades recebidas e os movimentos ficam no histórico.

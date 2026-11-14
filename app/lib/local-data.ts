@@ -615,6 +615,116 @@ export function completePendingSale(data: LocalData, saleId: string) {
   };
 }
 
+export function createStockSales(
+  data: LocalData,
+  sale: Sale,
+  quantity: number,
+  paidAmount: number,
+  requireStock: boolean,
+) {
+  const product = data.products.find((item) =>
+    item.id === sale.lines[0]?.productId && item.active,
+  );
+  if (!product) throw new Error("O produto selecionado já não está ativo.");
+  if (!Number.isSafeInteger(quantity) || quantity < 1 || sale.lines.length !== 1) {
+    throw new Error("Quantidade ou produto da venda inválido.");
+  }
+  const available = data.units
+    .filter((unit) => unit.productId === product.id && unit.status === "READY_TO_SHIP")
+    .sort((a, b) => a.acquiredAt.localeCompare(b.acquiredAt));
+  if ((requireStock || available.length > 0) && quantity > available.length) {
+    throw new Error("Não há unidades suficientes em stock.");
+  }
+  if (!available.length && quantity !== 1) {
+    throw new Error("Não há unidades suficientes em stock.");
+  }
+  const soldUnits = available.slice(0, quantity);
+  const paidCents = toCents(paidAmount);
+  const priceCents = toCents(sale.lines[0].unitPrice);
+  if (!Number.isFinite(paidAmount) || paidAmount < 0 || priceCents <= 0 ||
+    paidCents > priceCents * quantity) {
+    throw new Error("O valor do pagamento não é válido.");
+  }
+  const basePayment = Math.floor(paidCents / quantity);
+  const remainder = paidCents % quantity;
+  const sales = Array.from({ length: quantity }, (_, index): Sale => {
+    const unit = soldUnits[index];
+    return {
+      ...sale,
+      id: makeId(),
+      lines: [{
+        ...sale.lines[0],
+        quantity: 1,
+        unitIds: unit ? [unit.id] : [],
+        unitCost: unit ? unit.acquisitionCost : sale.lines[0].unitCost,
+      }],
+    };
+  });
+  const payments: Payment[] = sales.flatMap((item, index) => {
+    const amount = basePayment + (index < remainder ? 1 : 0);
+    return amount > 0 ? [{
+      id: makeId(),
+      saleId: item.id,
+      amount: fromCents(amount),
+      method: "OTHER" as const,
+      paidAt: sale.soldAt,
+      reference: "",
+    }] : [];
+  });
+  const soldUnitIds = new Set(soldUnits.map((unit) => unit.id));
+  const units = data.units.map((unit) =>
+    soldUnitIds.has(unit.id) ? { ...unit, status: "SOLD" as const } : unit,
+  );
+  const soldOut = !units.some((unit) =>
+    unit.productId === product.id && unit.status === "READY_TO_SHIP",
+  );
+  return {
+    ...data,
+    sales: [...sales, ...data.sales],
+    payments: [...payments, ...data.payments],
+    units,
+    products: soldOut
+      ? data.products.map((item) => item.id === product.id ? { ...item, active: false } : item)
+      : data.products,
+    movements: [
+      ...data.movements,
+      ...soldUnits.map((unit) => ({
+        id: makeId(),
+        unitId: unit.id,
+        type: "SALE_COMPLETED" as const,
+        quantityDelta: -1 as const,
+        fromLocationId: unit.locationId,
+        toLocationId: "",
+        occurredAt: sale.createdAt,
+        notes: sale.status === "COMPLETED" ? "Venda concluída" : "Venda pendente registada",
+      })),
+    ],
+  };
+}
+
+export function updateAvailableUnitCosts(
+  units: InventoryUnit[],
+  productId: string,
+  edits: { id: string; previousCost: number; cost: number }[],
+) {
+  const changes = new Map<string, number>();
+  for (const edit of edits) {
+    if (!Number.isFinite(edit.cost) || edit.cost < 0) {
+      throw new Error("Indica um custo válido, igual ou superior a zero, para cada unidade.");
+    }
+    const unit = units.find((item) => item.id === edit.id);
+    if (!unit || unit.productId !== productId || unit.status !== "READY_TO_SHIP" ||
+      unit.acquisitionCost !== edit.previousCost) {
+      throw new Error("Uma unidade ou o seu custo foi alterado. Fecha a edição e tenta novamente.");
+    }
+    changes.set(edit.id, roundMoney(edit.cost));
+  }
+  return units.map((unit) => {
+    const cost = changes.get(unit.id);
+    return cost === undefined ? unit : { ...unit, acquisitionCost: cost };
+  });
+}
+
 export function deleteSaleAndRelatedData(data: LocalData, saleId: string) {
   if (!data.sales.some((sale) => sale.id === saleId)) {
     throw new Error("Esta venda já não existe.");

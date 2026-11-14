@@ -32,6 +32,9 @@ const {
   duplicateProductWithStock,
   duplicateSaleWithPayments,
   shouldOverrideSaleLineCost,
+  createStockSales,
+  deleteSaleAndRelatedData,
+  updateAvailableUnitCosts,
 } = localDataModule;
 
 function makeSale(id, saleType = "PRIVATE", unitPrice = 125, unitCost = 95) {
@@ -349,6 +352,93 @@ test("venda antiga do stock apresenta custo já editado sem precisar de guardar 
   assert.equal(shouldOverrideSaleLineCost({ ...line, unitCostOverride: false }, units, true), true);
   const explicitStockCost = { ...sale, lines: [{ ...line, unitCostOverride: false }] };
   assert.equal(calculateSaleFinancialMetrics(explicitStockCost, { ...emptyLocalData, units }).cost, 80.95);
+});
+
+test("venda de cinco unidades do stock cria cinco vendas independentes", () => {
+  for (const status of ["PENDING", "COMPLETED"]) {
+    const sale = makeSale("template", "PRIVATE", 100, 30);
+    sale.status = status;
+    sale.lines[0].productId = "product";
+    sale.lines[0].unitCostOverride = false;
+    const product = { id: "product", active: true };
+    const units = Array.from({ length: 5 }, (_, index) => ({
+      id: `unit-${index}`,
+      productId: product.id,
+      acquisitionCost: 30 + index,
+      status: "READY_TO_SHIP",
+      acquiredAt: `2026-10-0${index + 1}`,
+      locationId: "location",
+    }));
+    const data = { ...emptyLocalData, products: [product], units };
+    const result = createStockSales(data, sale, 5, 120.02, true);
+
+    assert.equal(result.sales.length, 5);
+    assert.equal(new Set(result.sales.map((item) => item.id)).size, 5);
+    assert.deepEqual(result.sales.map((item) => item.lines[0].quantity), [1, 1, 1, 1, 1]);
+    assert.deepEqual(result.sales.map((item) => item.lines[0].unitIds[0]), units.map((unit) => unit.id));
+    assert.deepEqual(result.sales.map((item) => item.lines[0].unitCost), [30, 31, 32, 33, 34]);
+    assert.deepEqual(result.sales.map((item) => calculateSaleFinancialMetrics(item, result).cost), [30, 31, 32, 33, 34]);
+    assert.ok(result.sales.every((item) => item.status === status && item.lines[0].unitPrice === 100));
+    assert.deepEqual(result.payments.map((payment) => payment.amount), [24.01, 24.01, 24, 24, 24]);
+    assert.deepEqual(result.payments.map((payment) => payment.saleId), result.sales.map((item) => item.id));
+    assert.equal(result.movements.length, 5);
+    assert.ok(result.units.every((unit) => unit.status === "SOLD"));
+    assert.equal(result.products[0].active, false);
+
+    const changedSale = {
+      ...result.sales[0],
+      lines: [{ ...result.sales[0].lines[0], unitPrice: 75, unitCost: 10, unitCostOverride: true }],
+    };
+    assert.equal(calculateSaleFinancialMetrics(changedSale, result).grossProfit, 65);
+    assert.equal(calculateSaleFinancialMetrics(result.sales[1], result).grossProfit, 69);
+    const deleted = deleteSaleAndRelatedData(result, result.sales[0].id);
+    assert.equal(deleted.sales.length, 4);
+    assert.equal(deleted.payments.length, 4);
+    assert.equal(deleted.units[0].status, "READY_TO_SHIP");
+    assert.ok(deleted.units.slice(1).every((unit) => unit.status === "SOLD"));
+  }
+});
+
+test("pagamento total e venda sem stock mantêm valores unitários e validação", () => {
+  const sale = makeSale("template", "PRIVATE", 10, 4);
+  sale.lines[0].productId = "product";
+  const product = { id: "product", active: true };
+  const units = Array.from({ length: 2 }, (_, index) => ({
+    id: `unit-${index}`, productId: product.id, acquisitionCost: 4,
+    status: "READY_TO_SHIP", acquiredAt: "2026-10-01", locationId: "",
+  }));
+  const data = { ...emptyLocalData, products: [product], units };
+  const paid = createStockSales(data, sale, 2, 20, true);
+  assert.deepEqual(paid.payments.map((item) => item.amount), [10, 10]);
+  const pending = createStockSales(data, sale, 2, 0, true);
+  assert.equal(pending.payments.length, 0);
+  const oneCent = createStockSales(data, sale, 2, 0.01, true);
+  assert.deepEqual(oneCent.payments.map((item) => item.amount), [0.01]);
+  assert.equal(oneCent.payments[0].saleId, oneCent.sales[0].id);
+  assert.throws(() => createStockSales(data, sale, 3, 0, true), /stock/);
+  const noUnits = { ...data, units: [] };
+  assert.throws(() => createStockSales(noUnits, sale, 1, 0, true), /stock/);
+  const noStockSale = createStockSales(noUnits, sale, 1, 0, false);
+  assert.equal(noStockSale.sales.length, 1);
+  assert.deepEqual(noStockSale.sales[0].lines[0].unitIds, []);
+  assert.equal(noStockSale.movements.length, 0);
+  assert.throws(() => createStockSales(data, sale, 2, 20.01, true), /pagamento/);
+});
+
+test("edita apenas os custos escolhidos de unidades disponíveis", () => {
+  const units = [
+    { id: "a", productId: "product", status: "READY_TO_SHIP", acquisitionCost: 10 },
+    { id: "b", productId: "product", status: "READY_TO_SHIP", acquisitionCost: 20 },
+    { id: "sold", productId: "product", status: "SOLD", acquisitionCost: 30 },
+    { id: "other", productId: "other", status: "READY_TO_SHIP", acquisitionCost: 40 },
+  ];
+  const updated = updateAvailableUnitCosts(units, "product", [{ id: "a", previousCost: 10, cost: 0 }]);
+  assert.deepEqual(updated.map((unit) => unit.acquisitionCost), [0, 20, 30, 40]);
+  assert.equal(units[0].acquisitionCost, 10);
+  assert.throws(() => updateAvailableUnitCosts(units, "product", [{ id: "sold", previousCost: 30, cost: 1 }]), /alterado/);
+  assert.throws(() => updateAvailableUnitCosts(units, "product", [{ id: "other", previousCost: 40, cost: 1 }]), /alterado/);
+  assert.throws(() => updateAvailableUnitCosts(units, "product", [{ id: "a", previousCost: 9, cost: 1 }]), /alterado/);
+  assert.throws(() => updateAvailableUnitCosts(units, "product", [{ id: "a", previousCost: 10, cost: -1 }]), /custo válido/);
 });
 
 test("operational totals include completed sales only, not pending or cancelled sales", () => {
